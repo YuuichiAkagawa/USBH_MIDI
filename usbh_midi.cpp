@@ -61,6 +61,7 @@ MIDI::MIDI(USB *p)
     epInfo[i].epAddr        = 0;
     epInfo[i].maxPktSize  = (i) ? 0 : 8;
     epInfo[i].epAttribs     = 0;
+    epInfo[i].bmNakPower  = (i) ? USB_NAK_NOWAIT : 4;
   }
   // register in USB subsystem
   if (pUsb) {

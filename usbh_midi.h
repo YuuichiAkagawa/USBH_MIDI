@@ -43,10 +43,11 @@
 
 #define MIDI_MAX_ENDPOINTS 3 //endpoint 0, bulk_IN, bulk_OUT
 #define USB_SUBCLASS_MIDISTREAMING 3
+#define DESC_BUFF_SIZE        256
 
 class MIDI;
 
-class MIDI : public USBDeviceConfig, public UsbConfigXtracter
+class MIDI : public USBDeviceConfig
 {
 protected:
   static const uint8_t	epDataInIndex;			// DataIn endpoint index
@@ -61,7 +62,12 @@ protected:
   /* Endpoint data structure */
   EpInfo  epInfo[MIDI_MAX_ENDPOINTS];
 
+  void parseConfigDescr(byte addr, byte conf);
+#ifdef DEBUG
+  void PrintEndpointDescriptor( const USB_ENDPOINT_DESCRIPTOR* ep_ptr );
+#endif
 public:
+  uint16_t pid, vid;
   MIDI(USB *p);
   // Methods for recieving and sending data
   uint8_t RcvData(uint16_t *bytes_rcvd, uint8_t *dataptr);
@@ -71,8 +77,6 @@ public:
   virtual uint8_t Release();
   virtual uint8_t Poll(){}; //not implemented
   virtual uint8_t GetAddress() { return bAddress; };
-
-  //UsbConfigXtracter implementation
-  virtual void EndpointXtract(uint8_t conf, uint8_t iface, uint8_t alt, uint8_t proto, const USB_ENDPOINT_DESCRIPTOR *ep);
 };
+
 #endif //_USBH_MIDI_H_

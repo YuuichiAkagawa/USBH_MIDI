@@ -61,7 +61,9 @@ MIDI::MIDI(USB *p)
     epInfo[i].epAddr        = 0;
     epInfo[i].maxPktSize  = (i) ? 0 : 8;
     epInfo[i].epAttribs     = 0;
+//    epInfo[i].bmNakPower  = (i) ? USB_NAK_NOWAIT : USB_NAK_MAX_POWER;
     epInfo[i].bmNakPower  = (i) ? USB_NAK_NOWAIT : 4;
+
   }
   // register in USB subsystem
   if (pUsb) {
@@ -72,7 +74,7 @@ MIDI::MIDI(USB *p)
 /* Connection initialization of an MIDI Device */
 uint8_t MIDI::Init(uint8_t parent, uint8_t port, bool lowspeed)
 {
-  uint8_t    buf[sizeof(USB_DEVICE_DESCRIPTOR)];
+  uint8_t    buf[DESC_BUFF_SIZE];
   uint8_t    rcode;
   UsbDevice  *p = NULL;
   EpInfo     *oldep_ptr = NULL;
@@ -80,8 +82,9 @@ uint8_t MIDI::Init(uint8_t parent, uint8_t port, bool lowspeed)
   
   // get memory address of USB device address pool
   AddressPool &addrPool = pUsb->GetAddressPool();
-//  USBTRACE("\rMIDI Init\r\n");
-
+#ifdef DEBUG
+  USBTRACE("\rMIDI Init\r\n");
+#endif
   // check if address has already been assigned to an instance
   if (bAddress) {
     return USB_ERROR_CLASS_INSTANCE_ALREADY_IN_USE;
@@ -104,7 +107,8 @@ uint8_t MIDI::Init(uint8_t parent, uint8_t port, bool lowspeed)
 
   // Get device descriptor
   rcode = pUsb->getDevDescr( 0, 0, sizeof(USB_DEVICE_DESCRIPTOR), (uint8_t*)buf );
-
+  vid = (uint16_t)buf[8] + (uint16_t)buf[9] <<8;
+  pid = (uint16_t)buf[10] + (uint16_t)buf[11] <<8;
   // Restore p->epinfo
   p->epinfo = oldep_ptr;
 
@@ -129,8 +133,9 @@ uint8_t MIDI::Init(uint8_t parent, uint8_t port, bool lowspeed)
     bAddress = 0;
     return rcode;
   }//if (rcode...
-//  USBTRACE2("Addr:", bAddress);
-  
+#ifdef DEBUG
+  USBTRACE2("Addr:", bAddress);
+#endif  
   p->lowspeed = false;
 
   //get pointer to assigned address record
@@ -145,52 +150,112 @@ uint8_t MIDI::Init(uint8_t parent, uint8_t port, bool lowspeed)
   // Assign epInfo to epinfo pointer
   rcode = pUsb->setEpInfoEntry(bAddress, 1, epInfo);
   if (rcode) {
-//    USBTRACE("setEpInfoEntry failed");
+#ifdef DEBUG
+    USBTRACE("setEpInfoEntry failed");
+#endif
     goto FailSetDevTblEntry;
   }
-
-//  USBTRACE2("NC:", num_of_conf);
-
+#ifdef DEBUG
+  USBTRACE2("NC:", num_of_conf);
+#endif
   for (uint8_t i=0; i<num_of_conf; i++) {
-    ConfigDescParser<USB_CLASS_AUDIO, USB_SUBCLASS_MIDISTREAMING, 0, CP_MASK_COMPARE_ALL>	confDescrParser(this);
-    rcode = pUsb->getConfDescr(bAddress, 0, i, &confDescrParser);
+    parseConfigDescr(bAddress, i);
     if (bNumEP > 1)
       break;
   } // for
-//  USBTRACE2("NumEP:", bNumEP);
+#ifdef DEBUG
+  USBTRACE2("NumEP:", bNumEP);
+#endif
+  if( bConfNum == 0 ){  //Device not found.
+    goto FailGetConfDescr;
+  }
 
   // Assign epInfo to epinfo pointer
   rcode = pUsb->setEpInfoEntry(bAddress, bNumEP, epInfo);
-//  USBTRACE2("Conf:", bConfNum);
-
+#ifdef DEBUG
+  USBTRACE2("Conf:", bConfNum);
+#endif
   // Set Configuration Value
   rcode = pUsb->setConf(bAddress, 0, bConfNum);
   if (rcode) {
     goto FailSetConfDescr;
   }
-//  USBTRACE("Init done.");
+#ifdef DEBUG
+  USBTRACE("Init done.");
+#endif
   bPollEnable = true;
   return 0;
 FailGetDevDescr:
 FailSetDevTblEntry:
+FailGetConfDescr:
 FailSetConfDescr:
   Release();
   return rcode;
 }
 
-/* Extracts bulk-IN and bulk-OUT endpoint information from config descriptor */
-void MIDI::EndpointXtract(uint8_t conf, uint8_t iface, uint8_t alt, uint8_t proto, const USB_ENDPOINT_DESCRIPTOR *pep) 
+/* get and parse config descriptor */
+void MIDI::parseConfigDescr( byte addr, byte conf )
 {
-  bConfNum = conf;
-  uint8_t index;
-  if ((pep->bmAttributes & 0x02) == 2) {
-    index = ((pep->bEndpointAddress & 0x80) == 0x80) ? epDataInIndex : epDataOutIndex;
+  uint8_t buf[ DESC_BUFF_SIZE ];
+  uint8_t* buf_ptr = buf;
+  byte rcode;
+  byte descr_length;
+  byte descr_type;
+  unsigned int total_length;
+  USB_ENDPOINT_DESCRIPTOR *epDesc;
+
+  // get configuration descriptor (get descriptor size only)
+  rcode = pUsb->getConfDescr( addr, 0, 4, conf, buf );
+  if( rcode ){
+    return;
+  }  
+  total_length = buf[2] | ((int)buf[3] << 8);
+  if( total_length > DESC_BUFF_SIZE ) {    //check if total length is larger than buffer
+    total_length = DESC_BUFF_SIZE;
   }
-  // Fill in the endpoint info structure
-  epInfo[index].epAddr		= (pep->bEndpointAddress & 0x0F);
-  epInfo[index].maxPktSize	= (uint8_t)pep->wMaxPacketSize;
-  bNumEP ++;
-//  PrintEndpointDescriptor(pep);
+
+  // get configuration descriptor (all)
+  rcode = pUsb->getConfDescr( addr, 0, total_length, conf, buf ); //get the whole descriptor
+  if( rcode ){
+    return;
+  }  
+
+  //parsing descriptors
+  while( buf_ptr < buf + total_length ) {  
+    descr_length = *( buf_ptr );
+    descr_type   = *( buf_ptr + 1 );
+    switch( descr_type ) {
+      case USB_DESCRIPTOR_CONFIGURATION :
+        bConfNum = buf_ptr[5];
+        break;
+      case  USB_DESCRIPTOR_INTERFACE :
+        if( buf_ptr[5] == USB_CLASS_AUDIO && buf_ptr[6] == USB_SUBCLASS_MIDISTREAMING ) {  //p[5]; bInterfaceClass = 1(Audio), p[6]; bInterfaceSubClass = 3(MIDI Streaming)
+          ; //OK
+        }else{
+#ifdef DEBUG
+          Serial.print("No MIDI Device\n");
+#endif
+          buf_ptr += total_length + 1;
+          bConfNum = 0;
+        }
+        break;
+      case USB_DESCRIPTOR_ENDPOINT :
+        epDesc = (USB_ENDPOINT_DESCRIPTOR *)buf_ptr;
+        if ((epDesc->bmAttributes & 0x02) == 2) {//bulk
+          uint8_t index = ((epDesc->bEndpointAddress & 0x80) == 0x80) ? epDataInIndex : epDataOutIndex;
+          epInfo[index].epAddr		= (epDesc->bEndpointAddress & 0x0F);
+          epInfo[index].maxPktSize	= (uint8_t)epDesc->wMaxPacketSize;
+          bNumEP ++;
+#ifdef DEBUG
+          PrintEndpointDescriptor(epDesc);
+#endif
+        }
+        break;
+      default:
+        break;
+    }//switch( descr_type  
+    buf_ptr += descr_length;    //advance buffer pointer
+  }//while( buf_ptr <=...
 }
 
 /* Performs a cleanup after failed Init() attempt */
@@ -235,3 +300,22 @@ bool MIDI::RcvData(uint8_t *outBuf)
   return true;
 }
 
+#ifdef DEBUG
+void MIDI::PrintEndpointDescriptor( const USB_ENDPOINT_DESCRIPTOR* ep_ptr )
+{
+	Notify(PSTR("Endpoint descriptor:"));
+	Notify(PSTR("\r\nLength:\t\t"));
+	PrintHex<uint8_t>(ep_ptr->bLength);
+	Notify(PSTR("\r\nType:\t\t"));
+	PrintHex<uint8_t>(ep_ptr->bDescriptorType);
+	Notify(PSTR("\r\nAddress:\t"));
+	PrintHex<uint8_t>(ep_ptr->bEndpointAddress);
+	Notify(PSTR("\r\nAttributes:\t"));
+	PrintHex<uint8_t>(ep_ptr->bmAttributes);
+	Notify(PSTR("\r\nMaxPktSize:\t"));
+	PrintHex<uint16_t>(ep_ptr->wMaxPacketSize);
+	Notify(PSTR("\r\nPoll Intrv:\t"));
+	PrintHex<uint8_t>(ep_ptr->bInterval);
+	Notify(PSTR("\r\n"));
+}
+#endif

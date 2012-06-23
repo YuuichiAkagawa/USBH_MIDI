@@ -41,7 +41,7 @@
 #include <WProgram.h>
 #endif
 
-#define MIDI_MAX_ENDPOINTS 3 //endpoint 0, bulk_IN, bulk_OUT
+#define MIDI_MAX_ENDPOINTS 5 //endpoint 0, bulk_IN(MIDI), bulk_OUT(MIDI), bulk_IN(VSP), bulk_OUT(VSP)
 #define USB_SUBCLASS_MIDISTREAMING 3
 #define DESC_BUFF_SIZE        256
 
@@ -50,9 +50,13 @@ class MIDI;
 class MIDI : public USBDeviceConfig
 {
 protected:
-  static const uint8_t	epDataInIndex;			// DataIn endpoint index
-  static const uint8_t	epDataOutIndex;			// DataOUT endpoint index
+  static const uint8_t	epDataInIndex;			// DataIn endpoint index(MIDI)
+  static const uint8_t	epDataOutIndex;			// DataOUT endpoint index(MIDI)
+  static const uint8_t	epDataInIndexVSP;			// DataIn endpoint index(Vendor Specific Protocl)
+  static const uint8_t	epDataOutIndexVSP;			// DataOUT endpoint index(Vendor Specific Protocl)
 
+  boolean isMidiFound;
+  
   /* mandatory members */
   USB      *pUsb;
   uint8_t  bAddress;
@@ -63,6 +67,7 @@ protected:
   EpInfo  epInfo[MIDI_MAX_ENDPOINTS];
 
   void parseConfigDescr(byte addr, byte conf);
+  uint8_t SendDataMulti(uint8_t *dataptr, byte nCable);
 #ifdef DEBUG
   void PrintEndpointDescriptor( const USB_ENDPOINT_DESCRIPTOR* ep_ptr );
 #endif
@@ -72,6 +77,7 @@ public:
   // Methods for recieving and sending data
   uint8_t RcvData(uint16_t *bytes_rcvd, uint8_t *dataptr);
   bool    RcvData(uint8_t *outBuf);
+  uint8_t SendData(uint8_t *dataptr, byte nCable=0);
   // USBDeviceConfig implementation
   virtual uint8_t Init(uint8_t parent, uint8_t port, bool lowspeed);
   virtual uint8_t Release();

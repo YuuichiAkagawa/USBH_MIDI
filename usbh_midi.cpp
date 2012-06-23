@@ -30,10 +30,11 @@
 // midi.org/techspecs/
 //////////////////////////
 // STATUS BYTES
-// 0x80 == noteOn
-// 0x90 == noteOff
-// 0xA0 == afterTouch
-// 0xB0 == controlChange
+// 0x8n == noteOff
+// 0x9n == noteOn
+// 0xAn == afterTouch
+// 0xBn == controlChange
+//    n == Channel(0x0-0xf)
 //////////////////////////
 //DATA BYTE 1
 // note# == (0-127)
@@ -44,10 +45,44 @@
 // velocity == (0-127)
 // or
 // controlVal == (0-127)
-//////////////////////////
+///////////////////////////////////////////////////////////////////////////////
+// USB-MIDI Event Packets
+// usb.org - Universal Serial Bus Device Class Definition for MIDI Devices 1.0
+///////////////////////////////////////////////////////////////////////////////
+//+-------------+-------------+-------------+-------------+
+//|   Byte 0    |   Byte 1    |   Byte 2    |   Byte 3    |
+//+------+------+-------------+-------------+-------------+
+//|Cable | Code |             |             |             |
+//|Number|Index |   MIDI_0    |   MIDI_1    |   MIDI_2    |
+//|      |Number|             |             |             |
+//|(4bit)|(4bit)|   (8bit)    |   (8bit)    |   (8bit)    |
+//+------+------+-------------+-------------+-------------+
+// CN == 0x0-0xf
+//+-----+-----------+-------------------------------------------------------------------
+//| CIN |MIDI_x size|Description
+//+-----+-----------+-------------------------------------------------------------------
+//| 0x0 | 1, 2 or 3 |Miscellaneous function codes. Reserved for future extensions.
+//| 0x1 | 1, 2 or 3 |Cable events. Reserved for future expansion.
+//| 0x2 |     2     |Two-byte System Common messages like MTC, SongSelect, etc.
+//| 0x3 |     3     |Three-byte System Common messages like SPP, etc.
+//| 0x4 |     3     |SysEx starts or continues
+//| 0x5 |     1     |Single-byte System Common Message or SysEx ends with following single byte.
+//| 0x6 |     2     |SysEx ends with following two bytes.
+//| 0x7 |     3     |SysEx ends with following three bytes.
+//| 0x8 |     3     |Note-off
+//| 0x9 |     3     |Note-on
+//| 0xA |     3     |Poly-KeyPress
+//| 0xB |     3     |Control Change
+//| 0xC |     2     |Program Change
+//| 0xD |     2     |Channel Pressure
+//| 0xE |     3     |PitchBend Change
+//| 0xF |     1     |Single Byte
+//+-----+-----------+-------------------------------------------------------------------
 
 const uint8_t	MIDI::epDataInIndex  = 1;
 const uint8_t	MIDI::epDataOutIndex = 2;
+const uint8_t	MIDI::epDataInIndexVSP  = 3;
+const uint8_t	MIDI::epDataOutIndexVSP = 4;
 
 MIDI::MIDI(USB *p)
 {
@@ -55,6 +90,7 @@ MIDI::MIDI(USB *p)
   bAddress = 0;
   bNumEP = 1;
   bPollEnable  = false;
+  isMidiFound = false;
 
   // initialize endpoint data structures
   for(uint8_t i=0; i<MIDI_MAX_ENDPOINTS; i++) {
@@ -170,6 +206,13 @@ uint8_t MIDI::Init(uint8_t parent, uint8_t port, bool lowspeed)
     goto FailGetConfDescr;
   }
 
+  if( !isMidiFound ){ //MIDI Device not found. Try first Bulk transfer device
+    epInfo[epDataInIndex].epAddr		= epInfo[epDataInIndexVSP].epAddr;
+    epInfo[epDataInIndex].maxPktSize	= epInfo[epDataInIndexVSP].maxPktSize;
+    epInfo[epDataOutIndex].epAddr		= epInfo[epDataOutIndexVSP].epAddr;
+    epInfo[epDataOutIndex].maxPktSize	= epInfo[epDataOutIndexVSP].maxPktSize;
+  }
+
   // Assign epInfo to epinfo pointer
   rcode = pUsb->setEpInfoEntry(bAddress, bNumEP, epInfo);
 #ifdef DEBUG
@@ -203,6 +246,7 @@ void MIDI::parseConfigDescr( byte addr, byte conf )
   byte descr_type;
   unsigned int total_length;
   USB_ENDPOINT_DESCRIPTOR *epDesc;
+  boolean isMidi = false;
 
   // get configuration descriptor (get descriptor size only)
   rcode = pUsb->getConfDescr( addr, 0, 4, conf, buf );
@@ -230,19 +274,25 @@ void MIDI::parseConfigDescr( byte addr, byte conf )
         break;
       case  USB_DESCRIPTOR_INTERFACE :
         if( buf_ptr[5] == USB_CLASS_AUDIO && buf_ptr[6] == USB_SUBCLASS_MIDISTREAMING ) {  //p[5]; bInterfaceClass = 1(Audio), p[6]; bInterfaceSubClass = 3(MIDI Streaming)
-          ; //OK
+          isMidiFound = true; //MIDI device found.
+          isMidi      = true;
         }else{
 #ifdef DEBUG
           Serial.print("No MIDI Device\n");
 #endif
-          buf_ptr += total_length + 1;
-          bConfNum = 0;
+//          buf_ptr += total_length + 1;
+//          bConfNum = 0;
+            isMidi = false;
         }
         break;
       case USB_DESCRIPTOR_ENDPOINT :
         epDesc = (USB_ENDPOINT_DESCRIPTOR *)buf_ptr;
         if ((epDesc->bmAttributes & 0x02) == 2) {//bulk
-          uint8_t index = ((epDesc->bEndpointAddress & 0x80) == 0x80) ? epDataInIndex : epDataOutIndex;
+          uint8_t index;
+          if( isMidi )
+              index = ((epDesc->bEndpointAddress & 0x80) == 0x80) ? epDataInIndex : epDataOutIndex;
+          else
+              index = ((epDesc->bEndpointAddress & 0x80) == 0x80) ? epDataInIndexVSP : epDataOutIndexVSP;
           epInfo[index].epAddr		= (epDesc->bEndpointAddress & 0x0F);
           epInfo[index].maxPktSize	= (uint8_t)epDesc->wMaxPacketSize;
           bNumEP ++;
@@ -298,6 +348,94 @@ bool MIDI::RcvData(uint8_t *outBuf)
   outBuf[1] = rcvbuf[2];
   outBuf[2] = rcvbuf[3];
   return true;
+}
+
+/* Send data to MIDI device */
+uint8_t MIDI::SendDataMulti(uint8_t *dataptr, byte nCable)
+{
+  byte buf[4];
+  byte msg;
+  uint8_t rc;
+  byte i=0;
+
+  //Byte 0
+  buf[0] = (nCable << 4) | 0x4;
+
+  while(i < 0xff) {
+    for(i=1; i<=3; i++){
+      buf[i] = *dataptr;
+      if( *dataptr == 0xf7 ){
+        buf[0] = (nCable << 4) | (0x4 + i);
+        for(i=i+1; i<=3; i++){
+          buf[i] = 0;
+        }
+        i=0xfe;	//data end
+      }else{
+        dataptr++;
+      }
+    }
+    rc = pUsb->outTransfer(bAddress, epInfo[epDataOutIndex].epAddr, 4, buf);
+    if(rc != 0)
+     break;
+  }
+  return(rc);
+}
+
+/* Send data to MIDI device */
+uint8_t MIDI::SendData(uint8_t *dataptr, byte nCable)
+{
+  byte buf[4];
+  byte msg;
+
+  msg = dataptr[0];
+  // SysEx long message ?
+  if( msg == 0xf0 )
+  {
+     return SendDataMulti(dataptr, nCable);
+  }
+
+  buf[0] = (nCable << 4) | (msg >> 4);
+  if( msg < 0xf0 ) msg = msg & 0xf0;
+  
+
+  //Building USB-MIDI Event Packets
+  buf[1] = dataptr[0];
+  buf[2] = dataptr[1];
+  buf[3] = dataptr[2];
+
+  switch(msg) {
+    //3 bytes message
+    case 0xf2 : //system common message(SPP)
+      buf[0] = (nCable << 4) | 3;
+    case 0x80 : //Note off
+    case 0x90 : //Note on
+    case 0xa0 : //Poly KeyPress
+    case 0xb0 : //Control Change
+    case 0xe0 : //PitchBend Change
+        break;
+
+    //2 bytes message
+    case 0xf1 : //system common message(MTC)
+    case 0xf3 : //system common message(SongSelect)
+      buf[0] = (nCable << 4) | 2;
+    case 0xc0 : //Program Change
+    case 0xd0 : //Channel Pressure
+      buf[3] = 0;
+      break;
+    //1 bytes message
+    case 0xf8 : //system realtime message
+    case 0xf9 : //system realtime message
+    case 0xfa : //system realtime message
+    case 0xfb : //system realtime message
+    case 0xfc : //system realtime message
+    case 0xfe : //system realtime message
+    case 0xff : //system realtime message
+    default :
+      buf[2] = 0;
+      buf[3] = 0;
+      break;
+  }
+  return pUsb->outTransfer(bAddress, epInfo[epDataOutIndex].epAddr, 4, buf);
 }
 
 #ifdef DEBUG

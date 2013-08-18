@@ -1,7 +1,7 @@
 /*
  *******************************************************************************
  * USB-MIDI class driver for USB Host Shield 2.0 Library
- * Copyright 2012 Yuuichi Akagawa
+ * Copyright 2012-2013 Yuuichi Akagawa
  *
  * Idea from LPK25 USB-MIDI to Serial MIDI converter
  *   by Collin Cunningham - makezine.com, narbotic.com
@@ -326,7 +326,7 @@ uint8_t MIDI::RcvData(uint16_t *bytes_rcvd, uint8_t *dataptr)
 }
 
 /* Receive data from MIDI device */
-bool MIDI::RcvData(uint8_t *outBuf)
+uint8_t MIDI::RcvData(uint8_t *outBuf)
 {
   byte i, codeIndexNumber;
   byte rcode = 0;     //return code
@@ -337,17 +337,17 @@ bool MIDI::RcvData(uint8_t *outBuf)
 
   rcode = RcvData( &rcvd,  rcvbuf);
   if( rcode != 0 ) {
-    return false;
+    return 0;
   }
   
   //if all data is zero, no valid data received.
   if( rcvbuf[0] == 0 && rcvbuf[1] == 0 && rcvbuf[2] == 0 && rcvbuf[3] == 0 ) {
-    return false;
+    return 0;
   }
   outBuf[0] = rcvbuf[1];
   outBuf[1] = rcvbuf[2];
   outBuf[2] = rcvbuf[3];
-  return true;
+  return lookupMsgSize(rcvbuf[1]);
 }
 
 /* Send data to MIDI device */
@@ -403,33 +403,24 @@ uint8_t MIDI::SendData(uint8_t *dataptr, byte nCable)
   buf[2] = dataptr[1];
   buf[3] = dataptr[2];
 
-  switch(msg) {
+  switch(lookupMsgSize(msg)) {
     //3 bytes message
-    case 0xf2 : //system common message(SPP)
-      buf[0] = (nCable << 4) | 3;
-    case 0x80 : //Note off
-    case 0x90 : //Note on
-    case 0xa0 : //Poly KeyPress
-    case 0xb0 : //Control Change
-    case 0xe0 : //PitchBend Change
-        break;
+    case 3 :
+      if(msg == 0xf2) {//system common message(SPP)
+        buf[0] = (nCable << 4) | 3;
+      }
+      break;
 
     //2 bytes message
-    case 0xf1 : //system common message(MTC)
-    case 0xf3 : //system common message(SongSelect)
-      buf[0] = (nCable << 4) | 2;
-    case 0xc0 : //Program Change
-    case 0xd0 : //Channel Pressure
+    case 2 :
+      if(msg == 0xf1 || msg == 0xf3) {//system common message(MTC/SongSelect)
+        buf[0] = (nCable << 4) | 2;
+      }
       buf[3] = 0;
       break;
+
     //1 bytes message
-    case 0xf8 : //system realtime message
-    case 0xf9 : //system realtime message
-    case 0xfa : //system realtime message
-    case 0xfb : //system realtime message
-    case 0xfc : //system realtime message
-    case 0xfe : //system realtime message
-    case 0xff : //system realtime message
+    case 1 :
     default :
       buf[2] = 0;
       buf[3] = 0;
@@ -457,3 +448,48 @@ void MIDI::PrintEndpointDescriptor( const USB_ENDPOINT_DESCRIPTOR* ep_ptr )
 	Notify(PSTR("\r\n"));
 }
 #endif
+
+/* look up a MIDI message size from spec */
+/*Return                                 */
+/*  0 : undefined message                */
+/*  0<: Vaild message size(1-3)          */
+uint8_t MIDI::lookupMsgSize(uint8_t midiMsg)
+{
+  uint8_t msgSize = 0;
+
+  switch(midiMsg) {
+    //3 bytes messages
+    case 0xf2 : //system common message(SPP)
+    case 0x80 : //Note off
+    case 0x90 : //Note on
+    case 0xa0 : //Poly KeyPress
+    case 0xb0 : //Control Change
+    case 0xe0 : //PitchBend Change
+      msgSize = 3;
+      break;
+
+    //2 bytes messages
+    case 0xf1 : //system common message(MTC)
+    case 0xf3 : //system common message(SongSelect)
+    case 0xc0 : //Program Change
+    case 0xd0 : //Channel Pressure
+      msgSize = 2;
+      break;
+
+    //1 bytes messages
+    case 0xf8 : //system realtime message
+    case 0xf9 : //system realtime message
+    case 0xfa : //system realtime message
+    case 0xfb : //system realtime message
+    case 0xfc : //system realtime message
+    case 0xfe : //system realtime message
+    case 0xff : //system realtime message
+      msgSize = 1;
+      break;
+
+    //undefine messages
+    default :
+      break;
+  }
+  return msgSize;
+}

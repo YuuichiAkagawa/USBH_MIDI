@@ -1,13 +1,15 @@
 /*
  *******************************************************************************
  * USB-MIDI to Legacy Serial MIDI converter
- * Copyright 2012 Yuuichi Akagawa
+ * Copyright 2012-2013 Yuuichi Akagawa
  *
  * Idea from LPK25 USB-MIDI to Serial MIDI converter
  *   by Collin Cunningham - makezine.com, narbotic.com
  *
  * for use with USB Host Shield 2.0 from Circuitsathome.com
  * https://github.com/felis/USB_Host_Shield_2.0
+ *
+ * This is sample program. Do not expect perfect behavior.
  *******************************************************************************
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -40,9 +42,12 @@ USBHub  Hub1(&Usb);
 MIDI  Midi1(&Usb);
 MIDI  Midi2(&Usb);
 
+void MIDI_poll();
+void doDelay(unsigned long t1, unsigned long t2, unsigned long delayTime);
+
 void setup()
 {
-  Serial.begin(31500);
+  Serial.begin(31250);
 
   //Workaround for non UHS2.0 Shield 
   pinMode(7,OUTPUT);
@@ -56,25 +61,46 @@ void setup()
 
 void loop()
 {
+  unsigned long t1;
+
   Usb.Task();
+  t1 = micros();
   if( Usb.getUsbTaskState() == USB_STATE_RUNNING )
   {
     MIDI_poll();
   }
-  delay(1);
+  //delay(1ms)
+  doDelay(t1, micros(), 1000);
 }
 
 // Poll USB MIDI Controler and send to serial MIDI
 void MIDI_poll()
 {
     byte outBuf[ 3 ];
-    if( Midi1.RcvData(outBuf) == true ){
+    uint8_t size;
+
+    if( (size=Midi1.RcvData(outBuf)) > 0 ){
       //MIDI Output
-      Serial.write(outBuf, 3);
+      Serial.write(outBuf, size);
     }
-    if( Midi2.RcvData(outBuf) == true ){
+    if( (size=Midi2.RcvData(outBuf)) > 0 ){
       //MIDI Output
-      Serial.write(outBuf, 3);
+      Serial.write(outBuf, size);
     }
 }
 
+// Delay time (max 16383 us)
+void doDelay(unsigned long t1, unsigned long t2, unsigned long delayTime)
+{
+    unsigned long t3;
+
+    if( t1 > t2 ){
+      t3 = (4294967295 - t1 + t2);
+    }else{
+      t3 = t2 - t1;
+    }
+
+    if( t3 < delayTime ){
+      delayMicroseconds(delayTime - t3);
+    }
+}

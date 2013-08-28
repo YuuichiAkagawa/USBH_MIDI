@@ -457,6 +457,7 @@ uint8_t MIDI::lookupMsgSize(uint8_t midiMsg)
 {
   uint8_t msgSize = 0;
 
+  if( midiMsg < 0xf0 ) midiMsg &= 0xf0;
   switch(midiMsg) {
     //3 bytes messages
     case 0xf2 : //system common message(SPP)

@@ -36,6 +36,9 @@ uint8_t SendData(uint8_t *dataptr, byte nCable=0);
 ChangeLog
 ---------
 
+2013.08.28
+* Fix MIDI Channel issue.
+
 2013.08.18  
 * RcvData() Return type is changed to uint8_t.
 * Fix examples.

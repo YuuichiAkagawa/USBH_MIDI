@@ -79,12 +79,12 @@
 //| 0xF |     1     |Single Byte
 //+-----+-----------+-------------------------------------------------------------------
 
-const uint8_t	MIDI::epDataInIndex  = 1;
-const uint8_t	MIDI::epDataOutIndex = 2;
-const uint8_t	MIDI::epDataInIndexVSP  = 3;
-const uint8_t	MIDI::epDataOutIndexVSP = 4;
+const uint8_t	USBH_MIDI::epDataInIndex  = 1;
+const uint8_t	USBH_MIDI::epDataOutIndex = 2;
+const uint8_t	USBH_MIDI::epDataInIndexVSP  = 3;
+const uint8_t	USBH_MIDI::epDataOutIndexVSP = 4;
 
-MIDI::MIDI(USB *p)
+USBH_MIDI::USBH_MIDI(USB *p)
 {
   pUsb = p;
   bAddress = 0;
@@ -109,7 +109,7 @@ MIDI::MIDI(USB *p)
 }
 
 /* Connection initialization of an MIDI Device */
-uint8_t MIDI::Init(uint8_t parent, uint8_t port, bool lowspeed)
+uint8_t USBH_MIDI::Init(uint8_t parent, uint8_t port, bool lowspeed)
 {
   uint8_t    buf[DESC_BUFF_SIZE];
   uint8_t    rcode;
@@ -238,7 +238,7 @@ FailSetConfDescr:
 }
 
 /* get and parse config descriptor */
-void MIDI::parseConfigDescr( byte addr, byte conf )
+void USBH_MIDI::parseConfigDescr( byte addr, byte conf )
 {
   uint8_t buf[ DESC_BUFF_SIZE ];
   uint8_t* buf_ptr = buf;
@@ -310,7 +310,7 @@ void MIDI::parseConfigDescr( byte addr, byte conf )
 }
 
 /* Performs a cleanup after failed Init() attempt */
-uint8_t MIDI::Release()
+uint8_t USBH_MIDI::Release()
 {
   pUsb->GetAddressPool().FreeAddress(bAddress);
   bNumEP       = 1;		//must have to be reset to 1	
@@ -321,14 +321,14 @@ uint8_t MIDI::Release()
 }
 
 /* Receive data from MIDI device */
-uint8_t MIDI::RcvData(uint16_t *bytes_rcvd, uint8_t *dataptr)
+uint8_t USBH_MIDI::RcvData(uint16_t *bytes_rcvd, uint8_t *dataptr)
 {
   bytes_rcvd[0] = (uint16_t)epInfo[epDataInIndex].maxPktSize;
   return pUsb->inTransfer(bAddress, epInfo[epDataInIndex].epAddr, bytes_rcvd, dataptr);
 }
 
 /* Receive data from MIDI device */
-uint8_t MIDI::RcvData(uint8_t *outBuf)
+uint8_t USBH_MIDI::RcvData(uint8_t *outBuf)
 {
   byte rcode = 0;     //return code
   uint16_t  rcvd;
@@ -367,7 +367,7 @@ RcvData_return_from_buffer:
 }
 
 /* Send data to MIDI device */
-uint8_t MIDI::SendDataMulti(uint8_t *dataptr, byte nCable)
+uint8_t USBH_MIDI::SendDataMulti(uint8_t *dataptr, byte nCable)
 {
   byte buf[4];
   byte msg;
@@ -398,7 +398,7 @@ uint8_t MIDI::SendDataMulti(uint8_t *dataptr, byte nCable)
 }
 
 /* Send data to MIDI device */
-uint8_t MIDI::SendData(uint8_t *dataptr, byte nCable)
+uint8_t USBH_MIDI::SendData(uint8_t *dataptr, byte nCable)
 {
   byte buf[4];
   byte msg;
@@ -446,7 +446,7 @@ uint8_t MIDI::SendData(uint8_t *dataptr, byte nCable)
 }
 
 #ifdef DEBUG
-void MIDI::PrintEndpointDescriptor( const USB_ENDPOINT_DESCRIPTOR* ep_ptr )
+void USBH_MIDI::PrintEndpointDescriptor( const USB_ENDPOINT_DESCRIPTOR* ep_ptr )
 {
 	Notify(PSTR("Endpoint descriptor:"));
 	Notify(PSTR("\r\nLength:\t\t"));
@@ -469,7 +469,7 @@ void MIDI::PrintEndpointDescriptor( const USB_ENDPOINT_DESCRIPTOR* ep_ptr )
 /*Return                                 */
 /*  0 : undefined message                */
 /*  0<: Vaild message size(1-3)          */
-uint8_t MIDI::lookupMsgSize(uint8_t midiMsg)
+uint8_t USBH_MIDI::lookupMsgSize(uint8_t midiMsg)
 {
   uint8_t msgSize = 0;
 
@@ -509,4 +509,36 @@ uint8_t MIDI::lookupMsgSize(uint8_t midiMsg)
       break;
   }
   return msgSize;
+}
+
+/* Send SysEx message to MIDI device */
+uint8_t USBH_MIDI::SendSysEx(uint8_t *dataptr, unsigned int datasize, byte nCable)
+{
+  byte buf[4];
+  byte msg;
+  uint8_t rc;
+  unsigned int n = 1;
+
+  //Byte 0
+  buf[0] = (nCable << 4) | 0x4;
+
+  while(n < datasize) {
+    for(int i=1; i<=3; i++){
+      n++;
+      buf[i] = *dataptr;
+      if( n == datasize ){
+        buf[0] = (nCable << 4) | (0x4 + i);
+        buf[i] = '\xf7';
+        for(i=i+1; i<=3; i++){
+          buf[i] = 0;
+        }
+      }else{
+        dataptr++;
+      }
+    }
+    rc = pUsb->outTransfer(bAddress, epInfo[epDataOutIndex].epAddr, 4, buf);
+    if(rc != 0)
+     break;
+  }
+  return(rc);
 }

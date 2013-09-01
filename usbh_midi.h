@@ -32,9 +32,9 @@
 #define USB_SUBCLASS_MIDISTREAMING 3
 #define DESC_BUFF_SIZE        256
 #define MIDI_EVENT_PACKET_SIZE 64
-class MIDI;
+class USBH_MIDI;
 
-class MIDI : public USBDeviceConfig
+class USBH_MIDI : public USBDeviceConfig
 {
 protected:
   static const uint8_t	epDataInIndex;			// DataIn endpoint index(MIDI)
@@ -66,11 +66,12 @@ private:
 
 public:
   uint16_t pid, vid;
-  MIDI(USB *p);
+  USBH_MIDI(USB *p);
   // Methods for recieving and sending data
   uint8_t RcvData(uint16_t *bytes_rcvd, uint8_t *dataptr);
   uint8_t RcvData(uint8_t *outBuf);
   uint8_t SendData(uint8_t *dataptr, byte nCable=0);
+  uint8_t SendSysEx(uint8_t *dataptr, unsigned int datasize, byte nCable=0);
   // USBDeviceConfig implementation
   virtual uint8_t Init(uint8_t parent, uint8_t port, bool lowspeed);
   virtual uint8_t Release();

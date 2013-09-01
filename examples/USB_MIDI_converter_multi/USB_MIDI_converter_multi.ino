@@ -8,8 +8,6 @@
  *
  * for use with USB Host Shield 2.0 from Circuitsathome.com
  * https://github.com/felis/USB_Host_Shield_2.0
- *
- * This is sample program. Do not expect perfect behavior.
  *******************************************************************************
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -39,8 +37,8 @@
 
 USB  Usb;
 USBHub  Hub1(&Usb);
-MIDI  Midi1(&Usb);
-MIDI  Midi2(&Usb);
+USBH_MIDI  Midi1(&Usb);
+USBH_MIDI  Midi2(&Usb);
 
 void MIDI_poll();
 void doDelay(unsigned long t1, unsigned long t2, unsigned long delayTime);

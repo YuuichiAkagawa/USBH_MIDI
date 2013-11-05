@@ -26,20 +26,7 @@
 
 #if !defined(_USBH_MIDI_H_)
 #define _USBH_MIDI_H_
-#include <inttypes.h>
-#include <avr/pgmspace.h>
-#include "avrpins.h"
-#include "max3421e.h"
-#include "usbhost.h"
-#include "usb_ch9.h"
-#include "Usb.h"
-#include "confdescparser.h"
-
-#if defined(ARDUINO) && ARDUINO >=100
-#include "Arduino.h"
-#else
-#include <WProgram.h>
-#endif
+#include <Usb.h>
 
 #define MIDI_MAX_ENDPOINTS 5 //endpoint 0, bulk_IN(MIDI), bulk_OUT(MIDI), bulk_IN(VSP), bulk_OUT(VSP)
 #define USB_SUBCLASS_MIDISTREAMING 3

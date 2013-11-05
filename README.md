@@ -36,6 +36,10 @@ uint8_t SendData(uint8_t *dataptr, byte nCable=0);
 ChangeLog
 ---------
 
+2013.11.05
+* Removed all unnecessary includes. (latest UHS2 compatibility)
+* Rename all example extensions to .ino
+
 2013.08.28
 * Fix MIDI Channel issue.
 

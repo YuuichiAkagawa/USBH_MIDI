@@ -31,7 +31,7 @@
 #define MIDI_MAX_ENDPOINTS 5 //endpoint 0, bulk_IN(MIDI), bulk_OUT(MIDI), bulk_IN(VSP), bulk_OUT(VSP)
 #define USB_SUBCLASS_MIDISTREAMING 3
 #define DESC_BUFF_SIZE        256
-
+#define MIDI_EVENT_PACKET_SIZE 64
 class MIDI;
 
 class MIDI : public USBDeviceConfig
@@ -52,6 +52,9 @@ protected:
   bool     bPollEnable;
   /* Endpoint data structure */
   EpInfo  epInfo[MIDI_MAX_ENDPOINTS];
+  /* MIDI Event packet buffer */
+  uint8_t rcvbuf[MIDI_EVENT_PACKET_SIZE];
+  uint8_t readPtr;
 
   void parseConfigDescr(byte addr, byte conf);
   uint8_t SendDataMulti(uint8_t *dataptr, byte nCable);

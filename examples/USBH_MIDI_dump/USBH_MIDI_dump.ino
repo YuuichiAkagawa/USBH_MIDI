@@ -1,10 +1,7 @@
 /*
  *******************************************************************************
- * USB-MIDI to Legacy Serial MIDI converter
- * Copyright 2012-2013 Yuuichi Akagawa
- *
- * Idea from LPK25 USB-MIDI to Serial MIDI converter
- *   by Collin Cunningham - makezine.com, narbotic.com
+ * USB-MIDI dump utility
+ * Copyright 2013 Yuuichi Akagawa
  *
  * for use with USB Host Shield 2.0 from Circuitsathome.com
  * https://github.com/felis/USB_Host_Shield_2.0
@@ -27,27 +24,22 @@
  */
 
 #include <Usb.h>
-#include <usbhub.h>
 #include <usbh_midi.h>
 
-//////////////////////////
-// MIDI Pin assign
-// 2 : GND
-// 4 : +5V(Vcc) with 220ohm
-// 5 : TX
-//////////////////////////
-
 USB  Usb;
-USBHub  Hub1(&Usb);
-MIDI  Midi1(&Usb);
-MIDI  Midi2(&Usb);
+MIDI  Midi(&Usb);
 
 void MIDI_poll();
 void doDelay(unsigned long t1, unsigned long t2, unsigned long delayTime);
 
+boolean bFirst;
+uint16_t pid, vid;
+
 void setup()
 {
-  Serial.begin(31250);
+  bFirst = true;
+  vid = pid = 0;
+  Serial.begin(115200);
 
   //Workaround for non UHS2.0 Shield 
   pinMode(7,OUTPUT);
@@ -70,27 +62,31 @@ void loop()
     MIDI_poll();
   }
   //delay(1ms)
-  doDelay(t1, micros(), 1000);
+  //doDelay(t1, micros(), 1000);
 }
 
 // Poll USB MIDI Controler and send to serial MIDI
 void MIDI_poll()
 {
-    byte outBuf[ 3 ];
-    uint8_t size;
+    char buf[20];
+    uint8_t bufMidi[64];
+    uint16_t  rcvd;
 
-    do {
-      if( (size=Midi1.RcvData(outBuf)) > 0 ){
-        //MIDI Output
-        Serial.write(outBuf, size);
-      }
-    }while(size>0);
-    do {
-      if( (size=Midi2.RcvData(outBuf)) > 0 ){
-        //MIDI Output
-        Serial.write(outBuf, size);
-      }
-    }while(size>0);
+    if(Midi.vid != vid || Midi.pid != pid){
+      sprintf(buf, "VID:%04X, PID:%04X", Midi.vid, Midi.pid);
+      Serial.println(buf);
+      vid = Midi.vid;
+      pid = Midi.pid;
+    }
+    if(Midi.RcvData( &rcvd,  bufMidi) == 0 ){
+        sprintf(buf, "%08X:", millis());
+        Serial.print(buf);
+        for(int i=0; i<64; i++){
+          sprintf(buf, " %02X", bufMidi[i]);
+          Serial.print(buf);
+        }
+        Serial.println("");
+    }
 }
 
 // Delay time (max 16383 us)

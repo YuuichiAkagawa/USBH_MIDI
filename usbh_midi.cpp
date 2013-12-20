@@ -91,6 +91,7 @@ MIDI::MIDI(USB *p)
   bNumEP = 1;
   bPollEnable  = false;
   isMidiFound = false;
+  readPtr = 0;
 
   // initialize endpoint data structures
   for(uint8_t i=0; i<MIDI_MAX_ENDPOINTS; i++) {
@@ -143,8 +144,8 @@ uint8_t MIDI::Init(uint8_t parent, uint8_t port, bool lowspeed)
 
   // Get device descriptor
   rcode = pUsb->getDevDescr( 0, 0, sizeof(USB_DEVICE_DESCRIPTOR), (uint8_t*)buf );
-  vid = (uint16_t)buf[8] + (uint16_t)buf[9] <<8;
-  pid = (uint16_t)buf[10] + (uint16_t)buf[11] <<8;
+  vid = (uint16_t)buf[8]  + ((uint16_t)buf[9]  << 8);
+  pid = (uint16_t)buf[10] + ((uint16_t)buf[11] << 8);
   // Restore p->epinfo
   p->epinfo = oldep_ptr;
 
@@ -315,6 +316,7 @@ uint8_t MIDI::Release()
   bNumEP       = 1;		//must have to be reset to 1	
   bAddress     = 0;
   bPollEnable  = false;
+  readPtr      = 0;
   return 0;
 }
 
@@ -328,13 +330,21 @@ uint8_t MIDI::RcvData(uint16_t *bytes_rcvd, uint8_t *dataptr)
 /* Receive data from MIDI device */
 uint8_t MIDI::RcvData(uint8_t *outBuf)
 {
-  byte i, codeIndexNumber;
   byte rcode = 0;     //return code
   uint16_t  rcvd;
-  uint8_t rcvbuf[64];
 
   if( bPollEnable == false ) return false;
 
+  //Checking unprocessed message in buffer.
+  if( readPtr != 0 && readPtr < MIDI_EVENT_PACKET_SIZE ){
+    if(rcvbuf[readPtr] == 0 && rcvbuf[readPtr+1] == 0) {
+      //no unprocessed message left in the buffer.
+    }else{
+      goto RcvData_return_from_buffer;
+    }
+  }
+
+  readPtr = 0;
   rcode = RcvData( &rcvd,  rcvbuf);
   if( rcode != 0 ) {
     return 0;
@@ -344,10 +354,16 @@ uint8_t MIDI::RcvData(uint8_t *outBuf)
   if( rcvbuf[0] == 0 && rcvbuf[1] == 0 && rcvbuf[2] == 0 && rcvbuf[3] == 0 ) {
     return 0;
   }
-  outBuf[0] = rcvbuf[1];
-  outBuf[1] = rcvbuf[2];
-  outBuf[2] = rcvbuf[3];
-  return lookupMsgSize(rcvbuf[1]);
+
+RcvData_return_from_buffer:
+  readPtr++;
+  outBuf[0] = rcvbuf[readPtr];
+  readPtr++;
+  outBuf[1] = rcvbuf[readPtr];
+  readPtr++;
+  outBuf[2] = rcvbuf[readPtr];
+  readPtr++;
+  return lookupMsgSize(outBuf[0]);
 }
 
 /* Send data to MIDI device */

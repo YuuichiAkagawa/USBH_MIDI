@@ -76,10 +76,12 @@ void MIDI_poll()
     byte outBuf[ 3 ];
     uint8_t size;
 
-    if( (size=Midi.RcvData(outBuf)) > 0 ){
-      //MIDI Output
-      Serial.write(outBuf, size);
-    }
+    do {
+      if( (size=Midi.RcvData(outBuf)) > 0 ){
+        //MIDI Output
+        Serial.write(outBuf, size);
+      }
+    }while(size>0);
 }
 
 // Delay time (max 16383 us)

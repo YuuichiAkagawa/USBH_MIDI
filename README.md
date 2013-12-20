@@ -36,6 +36,10 @@ uint8_t SendData(uint8_t *dataptr, byte nCable=0);
 ChangeLog
 ---------
 
+2013.12.20
+* Fix multiple MIDI message problem.
+* Add new example (USBH_MIDI_dump)
+
 2013.11.05
 * Removed all unnecessary includes. (latest UHS2 compatibility)
 * Rename all example extensions to .ino

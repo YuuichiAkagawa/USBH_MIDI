@@ -1,7 +1,7 @@
 /*
  *******************************************************************************
  * USB-MIDI to Legacy Serial MIDI converter
- * Copyright 2012-2013 Yuuichi Akagawa
+ * Copyright 2012-2014 Yuuichi Akagawa
  *
  * Idea from LPK25 USB-MIDI to Serial MIDI converter
  *   by Collin Cunningham - makezine.com, narbotic.com
@@ -27,6 +27,11 @@
 #include <Usb.h>
 #include <usbh_midi.h>
 
+#ifdef USBCON
+#define _MIDI_SERIAL_PORT Serial1
+#else
+#define _MIDI_SERIAL_PORT Serial
+#endif
 //////////////////////////
 // MIDI Pin assign
 // 2 : GND
@@ -42,7 +47,7 @@ void doDelay(unsigned long t1, unsigned long t2, unsigned long delayTime);
 
 void setup()
 {
-  Serial.begin(31250);
+  _MIDI_SERIAL_PORT.begin(31250);
 
   //Workaround for non UHS2.0 Shield 
   pinMode(7,OUTPUT);
@@ -77,7 +82,7 @@ void MIDI_poll()
     do {
       if( (size=Midi.RcvData(outBuf)) > 0 ){
         //MIDI Output
-        Serial.write(outBuf, size);
+        _MIDI_SERIAL_PORT.write(outBuf, size);
       }
     }while(size>0);
 }

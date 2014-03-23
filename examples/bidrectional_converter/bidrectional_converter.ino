@@ -1,7 +1,7 @@
 /*
  *******************************************************************************
  * Legacy Serial MIDI and USB Host bidirectional converter
- * Copyright 2013 Yuuichi Akagawa
+ * Copyright 2013-2014 Yuuichi Akagawa
  *
  * for use with USB Host Shield 2.0 from Circuitsathome.com
  * https://github.com/felis/USB_Host_Shield_2.0
@@ -26,6 +26,13 @@
 #include <MIDI.h>
 #include <Usb.h>
 #include <usbh_midi.h>
+
+//Workaround for Arduino MIDI library v4.0 compatibility
+#ifdef USE_SERIAL_PORT
+#define _MIDI_SERIAL_PORT USE_SERIAL_PORT
+#else
+#define _MIDI_SERIAL_PORT MIDI_DEFAULT_SERIAL_PORT
+#endif
 
 //////////////////////////
 // MIDI Pin assign
@@ -88,7 +95,7 @@ void MIDI_poll()
 
     if( (size=Midi.RcvData(outBuf)) > 0 ){
       //MIDI Output
-      USE_SERIAL_PORT.write(outBuf, size);
+      _MIDI_SERIAL_PORT.write(outBuf, size);
     }
 }
 

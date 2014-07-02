@@ -27,7 +27,7 @@
 #include <usbh_midi.h>
 
 USB  Usb;
-MIDI  Midi(&Usb);
+USBH_MIDI  Midi(&Usb);
 
 void MIDI_poll();
 void doDelay(unsigned long t1, unsigned long t2, unsigned long delayTime);

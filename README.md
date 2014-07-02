@@ -17,9 +17,6 @@ for single device
 for multiple device (with USB hub)
 > File->Examples->USBH_MIDI->USB_MIDI_converter_multi
 
-Note
-> If you have Arduino Lenoardo, please change "Serial" to "Serial1"
-
 API
 ---
 
@@ -35,6 +32,9 @@ uint8_t SendData(uint8_t *dataptr, byte nCable=0);
 
 ChangeLog
 ---------
+
+2014.03.23
+* Fix examples for Arduino MIDI Library 4.0 compatibility and Leonardo
 
 2013.12.20
 * Fix multiple MIDI message problem.

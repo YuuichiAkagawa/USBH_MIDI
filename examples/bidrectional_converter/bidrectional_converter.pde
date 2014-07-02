@@ -1,13 +1,12 @@
 /*
  *******************************************************************************
- * USB-MIDI to Legacy Serial MIDI converter
- * Copyright 2012-2013 Yuuichi Akagawa
- *
- * Idea from LPK25 USB-MIDI to Serial MIDI converter
- *   by Collin Cunningham - makezine.com, narbotic.com
+ * Legacy Serial MIDI and USB Host bidirectional converter
+ * Copyright 2013 Yuuichi Akagawa
  *
  * for use with USB Host Shield 2.0 from Circuitsathome.com
  * https://github.com/felis/USB_Host_Shield_2.0
+ * and Arduino MIDI library
+ * http://playground.arduino.cc/Main/MIDILibrary
  *******************************************************************************
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -24,6 +23,7 @@
  *******************************************************************************
  */
 
+#include <MIDI.h>
 #include <Usb.h>
 #include <usbh_midi.h>
 
@@ -42,7 +42,7 @@ void doDelay(unsigned long t1, unsigned long t2, unsigned long delayTime);
 
 void setup()
 {
-  Serial.begin(31250);
+  MIDI.begin(MIDI_CHANNEL_OMNI);
 
   //Workaround for non UHS2.0 Shield 
   pinMode(7,OUTPUT);
@@ -57,12 +57,24 @@ void setup()
 void loop()
 {
   unsigned long t1;
+  uint8_t msg[4];
 
   Usb.Task();
   t1 = micros();
   if( Usb.getUsbTaskState() == USB_STATE_RUNNING )
   {
     MIDI_poll();
+    if (MIDI.read()) {
+       msg[0] = MIDI.getType();
+       if( msg[0] == 0xf0 ) { //SysEX
+         //TODO
+         //SysEx implementation is not yet.
+       }else{
+         msg[1] = MIDI.getData1();
+         msg[2] = MIDI.getData2();
+         Midi.SendData(msg, 0);
+       }
+    }
   }
   //delay(1ms)
   doDelay(t1, micros(), 1000);
@@ -74,12 +86,10 @@ void MIDI_poll()
     byte outBuf[ 3 ];
     uint8_t size;
 
-    do {
-      if( (size=Midi.RcvData(outBuf)) > 0 ){
-        //MIDI Output
-        Serial.write(outBuf, size);
-      }
-    }while(size>0);
+    if( (size=Midi.RcvData(outBuf)) > 0 ){
+      //MIDI Output
+      USE_SERIAL_PORT.write(outBuf, size);
+    }
 }
 
 // Delay time (max 16383 us)

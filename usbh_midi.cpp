@@ -321,14 +321,14 @@ uint8_t USBH_MIDI::Release()
 }
 
 /* Receive data from MIDI device */
-uint8_t USBH_MIDI::RcvData(uint16_t *bytes_rcvd, uint8_t *dataptr)
+uint8_t USBH_MIDI::RecvData(uint16_t *bytes_rcvd, uint8_t *dataptr)
 {
   bytes_rcvd[0] = (uint16_t)epInfo[epDataInIndex].maxPktSize;
   return pUsb->inTransfer(bAddress, epInfo[epDataInIndex].epAddr, bytes_rcvd, dataptr);
 }
 
 /* Receive data from MIDI device */
-uint8_t USBH_MIDI::RcvData(uint8_t *outBuf)
+uint8_t USBH_MIDI::RecvData(uint8_t *outBuf)
 {
   byte rcode = 0;     //return code
   uint16_t  rcvd;
@@ -337,64 +337,33 @@ uint8_t USBH_MIDI::RcvData(uint8_t *outBuf)
 
   //Checking unprocessed message in buffer.
   if( readPtr != 0 && readPtr < MIDI_EVENT_PACKET_SIZE ){
-    if(rcvbuf[readPtr] == 0 && rcvbuf[readPtr+1] == 0) {
+    if(recvBuf[readPtr] == 0 && recvBuf[readPtr+1] == 0) {
       //no unprocessed message left in the buffer.
     }else{
-      goto RcvData_return_from_buffer;
+      goto RecvData_return_from_buffer;
     }
   }
 
   readPtr = 0;
-  rcode = RcvData( &rcvd,  rcvbuf);
+  rcode = RecvData( &rcvd, recvBuf);
   if( rcode != 0 ) {
     return 0;
   }
   
   //if all data is zero, no valid data received.
-  if( rcvbuf[0] == 0 && rcvbuf[1] == 0 && rcvbuf[2] == 0 && rcvbuf[3] == 0 ) {
+  if( recvBuf[0] == 0 && recvBuf[1] == 0 && recvBuf[2] == 0 && recvBuf[3] == 0 ) {
     return 0;
   }
 
-RcvData_return_from_buffer:
+RecvData_return_from_buffer:
   readPtr++;
-  outBuf[0] = rcvbuf[readPtr];
+  outBuf[0] = recvBuf[readPtr];
   readPtr++;
-  outBuf[1] = rcvbuf[readPtr];
+  outBuf[1] = recvBuf[readPtr];
   readPtr++;
-  outBuf[2] = rcvbuf[readPtr];
+  outBuf[2] = recvBuf[readPtr];
   readPtr++;
   return lookupMsgSize(outBuf[0]);
-}
-
-/* Send data to MIDI device */
-uint8_t USBH_MIDI::SendDataMulti(uint8_t *dataptr, byte nCable)
-{
-  byte buf[4];
-  byte msg;
-  uint8_t rc;
-  byte i=0;
-
-  //Byte 0
-  buf[0] = (nCable << 4) | 0x4;
-
-  while(i < 0xff) {
-    for(i=1; i<=3; i++){
-      buf[i] = *dataptr;
-      if( *dataptr == 0xf7 ){
-        buf[0] = (nCable << 4) | (0x4 + i);
-        for(i=i+1; i<=3; i++){
-          buf[i] = 0;
-        }
-        i=0xfe;	//data end
-      }else{
-        dataptr++;
-      }
-    }
-    rc = pUsb->outTransfer(bAddress, epInfo[epDataOutIndex].epAddr, 4, buf);
-    if(rc != 0)
-     break;
-  }
-  return(rc);
 }
 
 /* Send data to MIDI device */
@@ -407,7 +376,7 @@ uint8_t USBH_MIDI::SendData(uint8_t *dataptr, byte nCable)
   // SysEx long message ?
   if( msg == 0xf0 )
   {
-     return SendDataMulti(dataptr, nCable);
+     return SendSysEx(dataptr, countSysExDataSize(dataptr), nCable);
   }
 
   buf[0] = (nCable << 4) | (msg >> 4);
@@ -511,30 +480,64 @@ uint8_t USBH_MIDI::lookupMsgSize(uint8_t midiMsg)
   return msgSize;
 }
 
+/* SysEx data size counter */
+unsigned int USBH_MIDI::countSysExDataSize(uint8_t *dataptr)
+{
+  unsigned int c = 1;
+
+  if( *dataptr != 0xf0 ){ //not SysEx
+    return 0;
+  }
+
+  //Search terminator(0xf7)
+  while(*dataptr != 0xf7)
+  {
+    dataptr++;
+    c++;
+    
+    //Limiter (upto 256 bytes)
+    if(c > 256){
+      c = 0;
+      break;
+	}
+  }
+  return c;
+}
+
 /* Send SysEx message to MIDI device */
 uint8_t USBH_MIDI::SendSysEx(uint8_t *dataptr, unsigned int datasize, byte nCable)
 {
   byte buf[4];
-  byte msg;
   uint8_t rc;
-  unsigned int n = 1;
+  unsigned int n = datasize;
 
   //Byte 0
-  buf[0] = (nCable << 4) | 0x4;
+  buf[0] = (nCable << 4) | 0x4;         //x4 SysEx starts or continues
 
-  while(n < datasize) {
-    for(int i=1; i<=3; i++){
-      n++;
-      buf[i] = *dataptr;
-      if( n == datasize ){
-        buf[0] = (nCable << 4) | (0x4 + i);
-        buf[i] = '\xf7';
-        for(i=i+1; i<=3; i++){
-          buf[i] = 0;
-        }
-      }else{
-        dataptr++;
-      }
+  while(n > 0) {
+    switch ( n ) {
+      case 1 :
+        buf[0] = (nCable << 4) | 0x5;   //x5 SysEx ends with following single byte.
+        buf[1] = *(dataptr++);
+        buf[2] = 0x00;
+        buf[3] = 0x00;
+        n = n - 1;
+        break;
+      case 2 :
+        buf[0] = (nCable << 4) | 0x6;   //x6 SysEx ends with following two bytes.
+        buf[1] = *(dataptr++);
+        buf[2] = *(dataptr++);
+        buf[3] = 0x00;
+        n = n - 2;
+        break;
+      case 3 :
+        buf[0] = (nCable << 4) | 0x7;   //x7 SysEx ends with following three bytes.
+      default :
+        buf[1] = *(dataptr++);
+        buf[2] = *(dataptr++);
+        buf[3] = *(dataptr++);
+        n = n - 3;
+        break;
     }
     rc = pUsb->outTransfer(bAddress, epInfo[epDataOutIndex].epAddr, 4, buf);
     if(rc != 0)

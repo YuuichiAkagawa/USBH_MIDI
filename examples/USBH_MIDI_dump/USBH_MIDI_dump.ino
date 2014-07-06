@@ -78,7 +78,7 @@ void MIDI_poll()
       vid = Midi.vid;
       pid = Midi.pid;
     }
-    if(Midi.RcvData( &rcvd,  bufMidi) == 0 ){
+    if(Midi.RecvData( &rcvd,  bufMidi) == 0 ){
         sprintf(buf, "%08X:", millis());
         Serial.print(buf);
         for(int i=0; i<64; i++){

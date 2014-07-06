@@ -83,13 +83,13 @@ void MIDI_poll()
     uint8_t size;
 
     do {
-      if( (size=Midi1.RcvData(outBuf)) > 0 ){
+      if( (size=Midi1.RecvData(outBuf)) > 0 ){
         //MIDI Output
         _MIDI_SERIAL_PORT.write(outBuf, size);
       }
     }while(size>0);
     do {
-      if( (size=Midi2.RcvData(outBuf)) > 0 ){
+      if( (size=Midi2.RecvData(outBuf)) > 0 ){
         //MIDI Output
         _MIDI_SERIAL_PORT.write(outBuf, size);
       }

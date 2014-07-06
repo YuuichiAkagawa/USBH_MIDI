@@ -80,7 +80,7 @@ void MIDI_poll()
     uint8_t size;
 
     do {
-      if( (size=Midi.RcvData(outBuf)) > 0 ){
+      if( (size=Midi.RecvData(outBuf)) > 0 ){
         //MIDI Output
         _MIDI_SERIAL_PORT.write(outBuf, size);
       }

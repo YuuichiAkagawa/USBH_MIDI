@@ -1,7 +1,7 @@
 /*
  *******************************************************************************
  * USB-MIDI class driver for USB Host Shield 2.0 Library
- * Copyright 2012-2013 Yuuichi Akagawa
+ * Copyright 2012-2014 Yuuichi Akagawa
  *
  * Idea from LPK25 USB-MIDI to Serial MIDI converter
  *   by Collin Cunningham - makezine.com, narbotic.com
@@ -53,11 +53,11 @@ protected:
   /* Endpoint data structure */
   EpInfo  epInfo[MIDI_MAX_ENDPOINTS];
   /* MIDI Event packet buffer */
-  uint8_t rcvbuf[MIDI_EVENT_PACKET_SIZE];
+  uint8_t recvBuf[MIDI_EVENT_PACKET_SIZE];
   uint8_t readPtr;
 
   void parseConfigDescr(byte addr, byte conf);
-  uint8_t SendDataMulti(uint8_t *dataptr, byte nCable);
+  unsigned int countSysExDataSize(uint8_t *dataptr);
 #ifdef DEBUG
   void PrintEndpointDescriptor( const USB_ENDPOINT_DESCRIPTOR* ep_ptr );
 #endif
@@ -68,10 +68,14 @@ public:
   uint16_t pid, vid;
   USBH_MIDI(USB *p);
   // Methods for recieving and sending data
-  uint8_t RcvData(uint16_t *bytes_rcvd, uint8_t *dataptr);
-  uint8_t RcvData(uint8_t *outBuf);
+  uint8_t RecvData(uint16_t *bytes_rcvd, uint8_t *dataptr);
+  uint8_t RecvData(uint8_t *outBuf);
   uint8_t SendData(uint8_t *dataptr, byte nCable=0);
   uint8_t SendSysEx(uint8_t *dataptr, unsigned int datasize, byte nCable=0);
+  // backward compatibility functions
+  inline uint8_t RcvData(uint16_t *bytes_rcvd, uint8_t *dataptr){ return RecvData(bytes_rcvd, dataptr); };
+  inline uint8_t RcvData(uint8_t *outBuf){ return RecvData(outBuf); };
+  
   // USBDeviceConfig implementation
   virtual uint8_t Init(uint8_t parent, uint8_t port, bool lowspeed);
   virtual uint8_t Release();

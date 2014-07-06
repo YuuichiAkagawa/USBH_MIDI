@@ -1,5 +1,4 @@
-USBH_MIDI
-=========
+# USBH_MIDI v0.1.0
 
 USB-MIDI class driver for Arduino [USB Host Shield 2.0 Library][UHS2]
 
@@ -7,31 +6,44 @@ You can convert USB MIDI keyboard  to legacy serial MIDI.
 
 Please check [device list][wiki]
 
-How to use
-----------
+## How to use
+
 Please put into a USBH_MIDI directory to your Arduino libraries directory.
 
-for single device
+### for single device
 > File->Examples->USBH_MIDI->USB_MIDI_converter
 
-for multiple device (with USB hub)
+### for multiple device (with USB hub)
 > File->Examples->USBH_MIDI->USB_MIDI_converter_multi
 
-API
----
+## API
 
-uint8_t RcvData(uint16_t *bytes_rcvd, uint8_t *dataptr);
-> Receive raw USB-MIDI Event Packets (4 bytes)
+### uint8_t RecvData(uint16_t *bytes_rcvd, uint8_t *dataptr);
+Receive raw USB-MIDI Event Packets (4 bytes)  
+return value is 0:Success, non-zero:Error(MAX3421E HRSLT)
 
-uint8_t RcvData(uint8_t *outBuf);
-> Receive MIDI messages (3 bytes)  
+### uint8_t RecvData(uint8_t *outBuf);
+Receive MIDI messages (3 bytes)  
 return value is MIDI message length(0-3)
 
-uint8_t SendData(uint8_t *dataptr, byte nCable=0);
-> Send MIDI message. You can set CableNumber(default=0).
+### uint8_t SendData(uint8_t *dataptr, byte nCable=0);
+Send MIDI message. You can set CableNumber(default=0).  
+return value is 0:Success, non-zero:Error(MAX3421E HRSLT)
 
-ChangeLog
----------
+### uint8_t SendSysEx(uint8_t *dataptr, unsigned int datasize, byte nCable=0);
+Send SysEx MIDI message. You can set CableNumber(default=0).  
+return value is 0:Success, non-zero:Error(MAX3421E HRSLT)  
+note: You must set first byte:0xf0 and last byte:0xf7
+
+## ChangeLog
+
+2014.07.06
+* Merge IOP_ArduinoMIDI branch into master
+* Change class name to USBH_MIDI
+* Rename the function RcvData to RecvData (Old name is still available)
+* Fix examples for Arduino MIDI Library 4.2 compatibility
+* Add SendSysEx()
+* Add new example (eVY1_sample)
 
 2014.03.23
 * Fix examples for Arduino MIDI Library 4.0 compatibility and Leonardo
@@ -58,10 +70,9 @@ ChangeLog
 * First release
 
 
+## License
 
-License
--------
-Copyright &copy; 2012 Yuuichi Akagawa
+Copyright &copy; 2012-2014 Yuuichi Akagawa
 
 Licensed under the [GNU General Public License v2.0][GPL2]
 

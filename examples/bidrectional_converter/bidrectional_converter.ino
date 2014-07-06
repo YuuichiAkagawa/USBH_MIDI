@@ -7,6 +7,9 @@
  * https://github.com/felis/USB_Host_Shield_2.0
  * and Arduino MIDI library
  * http://playground.arduino.cc/Main/MIDILibrary
+ *
+ * Note:
+ *  If you want use with Leonardo, you must choose Arduino MIDI library v4.0 or higher.
  *******************************************************************************
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -27,11 +30,14 @@
 #include <Usb.h>
 #include <usbh_midi.h>
 
-//Workaround for Arduino MIDI library v4.0 compatibility
-#ifdef USE_SERIAL_PORT
-#define _MIDI_SERIAL_PORT USE_SERIAL_PORT
+//Arduino MIDI library v4.2 compatibility
+#ifdef MIDI_CREATE_DEFAULT_INSTANCE
+MIDI_CREATE_DEFAULT_INSTANCE();
+#endif
+#ifdef USBCON
+#define _MIDI_SERIAL_PORT Serial1
 #else
-#define _MIDI_SERIAL_PORT MIDI_DEFAULT_SERIAL_PORT
+#define _MIDI_SERIAL_PORT Serial
 #endif
 
 //////////////////////////
@@ -93,7 +99,7 @@ void MIDI_poll()
     byte outBuf[ 3 ];
     uint8_t size;
 
-    if( (size=Midi.RcvData(outBuf)) > 0 ){
+    if( (size=Midi.RecvData(outBuf)) > 0 ){
       //MIDI Output
       _MIDI_SERIAL_PORT.write(outBuf, size);
     }

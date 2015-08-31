@@ -511,10 +511,10 @@ uint8_t USBH_MIDI::SendSysEx(uint8_t *dataptr, unsigned int datasize, byte nCabl
   uint8_t rc;
   unsigned int n = datasize;
 
-  //Byte 0
-  buf[0] = (nCable << 4) | 0x4;         //x4 SysEx starts or continues
-
   while(n > 0) {
+    //Byte 0
+    buf[0] = (nCable << 4) | 0x4;       //x4 SysEx starts or continues
+
     switch ( n ) {
       case 1 :
         buf[0] = (nCable << 4) | 0x5;   //x5 SysEx ends with following single byte.

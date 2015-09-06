@@ -1,7 +1,7 @@
 /*
  *******************************************************************************
  * USB-MIDI dump utility
- * Copyright 2013 Yuuichi Akagawa
+ * Copyright 2013-2015 Yuuichi Akagawa
  *
  * for use with USB Host Shield 2.0 from Circuitsathome.com
  * https://github.com/felis/USB_Host_Shield_2.0
@@ -23,10 +23,17 @@
  *******************************************************************************
  */
 
-#include <Usb.h>
 #include <usbh_midi.h>
+#include <usbhub.h>
+
+// Satisfy the IDE, which needs to see the include statment in the ino too.
+#ifdef dobogusinclude
+#include <spi4teensy3.h>
+#include <SPI.h>
+#endif
 
 USB  Usb;
+//USBHub Hub(&Usb);
 USBH_MIDI  Midi(&Usb);
 
 void MIDI_poll();
@@ -79,8 +86,10 @@ void MIDI_poll()
       pid = Midi.pid;
     }
     if(Midi.RecvData( &rcvd,  bufMidi) == 0 ){
-        sprintf(buf, "%08X:", millis());
+        sprintf(buf, "%08X: ", millis());
         Serial.print(buf);
+        Serial.print(rcvd);
+        Serial.print(':');
         for(int i=0; i<64; i++){
           sprintf(buf, " %02X", bufMidi[i]);
           Serial.print(buf);

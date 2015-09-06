@@ -1,4 +1,4 @@
-# USBH_MIDI v0.1.0
+# USBH_MIDI v0.2.0
 
 USB-MIDI class driver for Arduino [USB Host Shield 2.0 Library][UHS2]
 
@@ -6,9 +6,14 @@ You can convert USB MIDI keyboard  to legacy serial MIDI.
 
 Please check [device list][wiki]
 
-## How to use
+## Requirement
+- Arduino IDE 1.6.x or lator
+- USB Host Shield 2.0 Library 1.0.0 or lator
 
-Please put into a USBH_MIDI directory to your Arduino libraries directory.
+## How to install
+
+Open the Arduino IDE and click to the "Sketch" menu and then "Include Library" > "Add .ZIP Library".  
+And Navigate to the downloaded zip file's location and open it.
 
 ### for single device
 > File->Examples->USBH_MIDI->USB_MIDI_converter
@@ -18,24 +23,31 @@ Please put into a USBH_MIDI directory to your Arduino libraries directory.
 
 ## API
 
-### uint8_t RecvData(uint16_t *bytes_rcvd, uint8_t *dataptr);
-Receive raw USB-MIDI Event Packets (4 bytes)  
-return value is 0:Success, non-zero:Error(MAX3421E HRSLT)
+- `uint8_t RecvData(uint8_t *outBuf)`
+  Receive MIDI message (3 bytes)  
+  return value is MIDI message length(0-3)
 
-### uint8_t RecvData(uint8_t *outBuf);
-Receive MIDI messages (3 bytes)  
-return value is MIDI message length(0-3)
+- `uint8_t RecvData(uint16_t *bytes_rcvd, uint8_t *dataptr)`
+  Receive raw USB-MIDI Event Packets (each 4 bytes, upto 64 bytes)  
+  `dataptr` must allocate 64bytes buffer.  
+  return value is 0:Success, non-zero:Error(MAX3421E HRSLT) and bytes_rcvd is received USB packet length.  
+  note: USB packet length is not necessarily the length of the MIDI message.
 
-### uint8_t SendData(uint8_t *dataptr, byte nCable=0);
-Send MIDI message. You can set CableNumber(default=0).  
-return value is 0:Success, non-zero:Error(MAX3421E HRSLT)
+- `uint8_t SendData(uint8_t *dataptr, byte nCable=0)`
+  Send MIDI message. You can set CableNumber(default=0).  
+  return value is 0:Success, non-zero:Error(MAX3421E HRSLT)
 
-### uint8_t SendSysEx(uint8_t *dataptr, unsigned int datasize, byte nCable=0);
-Send SysEx MIDI message. You can set CableNumber(default=0).  
-return value is 0:Success, non-zero:Error(MAX3421E HRSLT)  
-note: You must set first byte:0xf0 and last byte:0xf7
+- `uint8_t SendSysEx(uint8_t *dataptr, unsigned int datasize, byte nCable=0)`
+  Send SysEx MIDI message. You can set CableNumber(default=0).  
+  return value is 0:Success, non-zero:Error(MAX3421E HRSLT)  
+  note: You must set first byte:0xf0 and last byte:0xf7
 
 ## ChangeLog
+2015.09.06
+* Compatible with USB Host Shield 2.0 Library 1.0.0 or lator.
+* Compatible with Arduino IDE 1.6.0 or lator.
+* Fix for less than 64 bytes USB packet devices
+* SysEx message was broken since felis/USB_Host_Shield_2.0@45df706
 
 2014.07.06
 * Merge IOP_ArduinoMIDI branch into master
@@ -72,7 +84,7 @@ note: You must set first byte:0xf0 and last byte:0xf7
 
 ## License
 
-Copyright &copy; 2012-2014 Yuuichi Akagawa
+Copyright &copy; 2012-2015 Yuuichi Akagawa
 
 Licensed under the [GNU General Public License v2.0][GPL2]
 

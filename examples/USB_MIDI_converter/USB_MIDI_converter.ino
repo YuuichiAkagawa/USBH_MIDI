@@ -1,7 +1,7 @@
 /*
  *******************************************************************************
  * USB-MIDI to Legacy Serial MIDI converter
- * Copyright 2012-2014 Yuuichi Akagawa
+ * Copyright 2012-2015 Yuuichi Akagawa
  *
  * Idea from LPK25 USB-MIDI to Serial MIDI converter
  *   by Collin Cunningham - makezine.com, narbotic.com
@@ -24,8 +24,14 @@
  *******************************************************************************
  */
 
-#include <Usb.h>
 #include <usbh_midi.h>
+#include <usbhub.h>
+
+// Satisfy the IDE, which needs to see the include statment in the ino too.
+#ifdef dobogusinclude
+#include <spi4teensy3.h>
+#include <SPI.h>
+#endif
 
 #ifdef USBCON
 #define _MIDI_SERIAL_PORT Serial1

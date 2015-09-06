@@ -1,7 +1,7 @@
 /*
  *******************************************************************************
  * eVY1 Shield sample - Say 'Konnichiwa'
- * Copyright 2014 Yuuichi Akagawa
+ * Copyright 2014-2015 Yuuichi Akagawa
  *
  * for use with USB Host Shield 2.0 from Circuitsathome.com
  * https://github.com/felis/USB_Host_Shield_2.0
@@ -22,10 +22,17 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>
  *******************************************************************************
  */
-#include <Usb.h>
 #include <usbh_midi.h>
+#include <usbhub.h>
+
+// Satisfy the IDE, which needs to see the include statment in the ino too.
+#ifdef dobogusinclude
+#include <spi4teensy3.h>
+#include <SPI.h>
+#endif
 
 USB  Usb;
+//USBHub Hub(&Usb);
 USBH_MIDI  Midi(&Usb);
 
 void MIDI_poll();

@@ -1,19 +1,11 @@
-# USBH_MIDI v0.2.0
+# USBH_MIDI v0.2.1
 
 USB-MIDI class driver for Arduino [USB Host Shield 2.0 Library][UHS2]
 
-You can convert USB MIDI keyboard  to legacy serial MIDI.
+USBH_MIDI is USB-MIDI class driver for Arduino USB Host Shield 2.0 Library.  
+USBH_MIDI is included in [USB Host Shield 2.0 Library][UHS2]. You don't need install separatery.
 
-Please check [device list][wiki]
-
-## Requirement
-- Arduino IDE 1.6.x or lator
-- USB Host Shield 2.0 Library 1.0.0 or lator
-
-## How to install
-
-Open the Arduino IDE and click to the "Sketch" menu and then "Include Library" > "Add .ZIP Library".  
-And Navigate to the downloaded zip file's location and open it.
+Project site is [here][GHP].
 
 ### for single device
 > File->Examples->USBH_MIDI->USB_MIDI_converter
@@ -43,6 +35,10 @@ And Navigate to the downloaded zip file's location and open it.
   note: You must set first byte:0xf0 and last byte:0xf7
 
 ## ChangeLog
+2016.03.21
+* Join the USB Host Shield 2.0 Library.
+* Adjust indentation
+
 2015.09.06
 * Compatible with USB Host Shield 2.0 Library 1.0.0 or lator.
 * Compatible with Arduino IDE 1.6.0 or lator.
@@ -91,3 +87,4 @@ Licensed under the [GNU General Public License v2.0][GPL2]
 [GPL2]: http://www.gnu.org/licenses/gpl2.html
 [wiki]: https://github.com/YuuichiAkagawa/USBH_MIDI/wiki
 [UHS2]: https://github.com/felis/USB_Host_Shield_2.0
+[GHP]: http://yuuichiakagawa.github.io/USBH_MIDI/

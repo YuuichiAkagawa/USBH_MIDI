@@ -1,7 +1,7 @@
 /*
  *******************************************************************************
  * USB-MIDI class driver for USB Host Shield 2.0 Library
- * Copyright 2012-2014 Yuuichi Akagawa
+ * Copyright (c) 2012-2016 Yuuichi Akagawa
  *
  * Idea from LPK25 USB-MIDI to Serial MIDI converter
  *   by Collin Cunningham - makezine.com, narbotic.com
@@ -26,7 +26,7 @@
 
 #if !defined(_USBH_MIDI_H_)
 #define _USBH_MIDI_H_
-#include <Usb.h>
+#include "Usb.h"
 
 #define MIDI_MAX_ENDPOINTS 5 //endpoint 0, bulk_IN(MIDI), bulk_OUT(MIDI), bulk_IN(VSP), bulk_OUT(VSP)
 #define USB_SUBCLASS_MIDISTREAMING 3
@@ -36,51 +36,51 @@ class USBH_MIDI;
 
 class USBH_MIDI : public USBDeviceConfig
 {
-protected:
-  static const uint8_t	epDataInIndex;			// DataIn endpoint index(MIDI)
-  static const uint8_t	epDataOutIndex;			// DataOUT endpoint index(MIDI)
-  static const uint8_t	epDataInIndexVSP;			// DataIn endpoint index(Vendor Specific Protocl)
-  static const uint8_t	epDataOutIndexVSP;			// DataOUT endpoint index(Vendor Specific Protocl)
-
-  boolean isMidiFound;
-  
-  /* mandatory members */
-  USB      *pUsb;
-  uint8_t  bAddress;
-  uint8_t  bConfNum;    // configuration number
-  uint8_t  bNumEP;      // total number of EP in the configuration
-  bool     bPollEnable;
-  /* Endpoint data structure */
-  EpInfo  epInfo[MIDI_MAX_ENDPOINTS];
-  /* MIDI Event packet buffer */
-  uint8_t recvBuf[MIDI_EVENT_PACKET_SIZE];
-  uint8_t readPtr;
-
-  void parseConfigDescr(byte addr, byte conf);
-  unsigned int countSysExDataSize(uint8_t *dataptr);
-#ifdef DEBUG
-  void PrintEndpointDescriptor( const USB_ENDPOINT_DESCRIPTOR* ep_ptr );
-#endif
 private:
-  uint8_t lookupMsgSize(uint8_t midiMsg);
+        uint8_t lookupMsgSize(uint8_t midiMsg);
 
+protected:
+        static const uint8_t	epDataInIndex;          // DataIn endpoint index(MIDI)
+        static const uint8_t	epDataOutIndex;         // DataOUT endpoint index(MIDI)
+        static const uint8_t	epDataInIndexVSP;       // DataIn endpoint index(Vendor Specific Protocl)
+        static const uint8_t	epDataOutIndexVSP;      // DataOUT endpoint index(Vendor Specific Protocl)
+
+        boolean isMidiFound;
+
+        /* mandatory members */
+        USB      *pUsb;
+        uint8_t  bAddress;
+        uint8_t  bConfNum;    // configuration number
+        uint8_t  bNumEP;      // total number of EP in the configuration
+        bool     bPollEnable;
+        /* Endpoint data structure */
+        EpInfo  epInfo[MIDI_MAX_ENDPOINTS];
+        /* MIDI Event packet buffer */
+        uint8_t recvBuf[MIDI_EVENT_PACKET_SIZE];
+        uint8_t readPtr;
+
+        void parseConfigDescr(byte addr, byte conf);
+        unsigned int countSysExDataSize(uint8_t *dataptr);
+#ifdef DEBUG
+        void PrintEndpointDescriptor( const USB_ENDPOINT_DESCRIPTOR* ep_ptr );
+#endif
 public:
-  uint16_t pid, vid;
-  USBH_MIDI(USB *p);
-  // Methods for recieving and sending data
-  uint8_t RecvData(uint16_t *bytes_rcvd, uint8_t *dataptr);
-  uint8_t RecvData(uint8_t *outBuf);
-  uint8_t SendData(uint8_t *dataptr, byte nCable=0);
-  uint8_t SendSysEx(uint8_t *dataptr, unsigned int datasize, byte nCable=0);
-  // backward compatibility functions
-  inline uint8_t RcvData(uint16_t *bytes_rcvd, uint8_t *dataptr){ return RecvData(bytes_rcvd, dataptr); };
-  inline uint8_t RcvData(uint8_t *outBuf){ return RecvData(outBuf); };
-  
-  // USBDeviceConfig implementation
-  virtual uint8_t Init(uint8_t parent, uint8_t port, bool lowspeed);
-  virtual uint8_t Release();
-  virtual uint8_t Poll(){}; //not implemented
-  virtual uint8_t GetAddress() { return bAddress; };
+        uint16_t pid, vid;
+        USBH_MIDI(USB *p);
+        // Methods for recieving and sending data
+        uint8_t RecvData(uint16_t *bytes_rcvd, uint8_t *dataptr);
+        uint8_t RecvData(uint8_t *outBuf);
+        uint8_t SendData(uint8_t *dataptr, byte nCable=0);
+        uint8_t SendSysEx(uint8_t *dataptr, unsigned int datasize, byte nCable=0);
+        // backward compatibility functions
+        inline uint8_t RcvData(uint16_t *bytes_rcvd, uint8_t *dataptr){ return RecvData(bytes_rcvd, dataptr); };
+        inline uint8_t RcvData(uint8_t *outBuf){ return RecvData(outBuf); };
+        
+        // USBDeviceConfig implementation
+        virtual uint8_t Init(uint8_t parent, uint8_t port, bool lowspeed);
+        virtual uint8_t Release();
+        virtual uint8_t Poll(){}; //not implemented
+        virtual uint8_t GetAddress() { return bAddress; };
 };
 
 #endif //_USBH_MIDI_H_

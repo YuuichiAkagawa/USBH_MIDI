@@ -1,4 +1,4 @@
-# USBH_MIDI v0.2.1
+# USBH_MIDI v0.2.2
 
 USB-MIDI class driver for Arduino [USB Host Shield 2.0 Library][UHS2]
 
@@ -29,23 +29,32 @@ Project site is [here][GHP].
   Send MIDI message. You can set CableNumber(default=0).  
   return value is 0:Success, non-zero:Error(MAX3421E HRSLT)
 
+- `uint8_t SendRawData(uint16_t bytes_send, uint8_t *dataptr)`
+  Send raw data. You can send any data to MIDI. (no compliant USB-MIDI event packet)  
+  return value is 0:Success, non-zero:Error(MAX3421E HRSLT)
+
 - `uint8_t SendSysEx(uint8_t *dataptr, unsigned int datasize, byte nCable=0)`
   Send SysEx MIDI message. You can set CableNumber(default=0).  
   return value is 0:Success, non-zero:Error(MAX3421E HRSLT)  
   note: You must set first byte:0xf0 and last byte:0xf7
 
 ## ChangeLog
-2016.03.21
+2016.04.09 (0.2.2)
+* Improve SysExSend() performance.
+* Add SendRawData()
+* Update debug messages
+
+2016.03.21 (0.2.1)
 * Join the USB Host Shield 2.0 Library.
 * Adjust indentation
 
-2015.09.06
+2015.09.06 (0.2.0)
 * Compatible with USB Host Shield 2.0 Library 1.0.0 or lator.
 * Compatible with Arduino IDE 1.6.0 or lator.
 * Fix for less than 64 bytes USB packet devices
 * SysEx message was broken since felis/USB_Host_Shield_2.0@45df706
 
-2014.07.06
+2014.07.06 (0.1.0)
 * Merge IOP_ArduinoMIDI branch into master
 * Change class name to USBH_MIDI
 * Rename the function RcvData to RecvData (Old name is still available)

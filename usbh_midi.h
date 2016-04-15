@@ -26,6 +26,7 @@
 
 #if !defined(_USBH_MIDI_H_)
 #define _USBH_MIDI_H_
+//#define DEBUG_USB_HOST
 #include "Usb.h"
 
 #define MIDI_MAX_ENDPOINTS 5 //endpoint 0, bulk_IN(MIDI), bulk_OUT(MIDI), bulk_IN(VSP), bulk_OUT(VSP)
@@ -40,10 +41,10 @@ private:
         uint8_t lookupMsgSize(uint8_t midiMsg);
 
 protected:
-        static const uint8_t	epDataInIndex;          // DataIn endpoint index(MIDI)
-        static const uint8_t	epDataOutIndex;         // DataOUT endpoint index(MIDI)
-        static const uint8_t	epDataInIndexVSP;       // DataIn endpoint index(Vendor Specific Protocl)
-        static const uint8_t	epDataOutIndexVSP;      // DataOUT endpoint index(Vendor Specific Protocl)
+        static const uint8_t    epDataInIndex;          // DataIn endpoint index(MIDI)
+        static const uint8_t    epDataOutIndex;         // DataOUT endpoint index(MIDI)
+        static const uint8_t    epDataInIndexVSP;       // DataIn endpoint index(Vendor Specific Protocl)
+        static const uint8_t    epDataOutIndexVSP;      // DataOUT endpoint index(Vendor Specific Protocl)
 
         boolean isMidiFound;
 
@@ -61,7 +62,7 @@ protected:
 
         void parseConfigDescr(byte addr, byte conf);
         unsigned int countSysExDataSize(uint8_t *dataptr);
-#ifdef DEBUG
+#ifdef DEBUG_USB_HOST
         void PrintEndpointDescriptor( const USB_ENDPOINT_DESCRIPTOR* ep_ptr );
 #endif
 public:
@@ -72,10 +73,11 @@ public:
         uint8_t RecvData(uint8_t *outBuf);
         uint8_t SendData(uint8_t *dataptr, byte nCable=0);
         uint8_t SendSysEx(uint8_t *dataptr, unsigned int datasize, byte nCable=0);
+        uint8_t SendRawData(uint16_t bytes_send, uint8_t *dataptr);
         // backward compatibility functions
         inline uint8_t RcvData(uint16_t *bytes_rcvd, uint8_t *dataptr){ return RecvData(bytes_rcvd, dataptr); };
         inline uint8_t RcvData(uint8_t *outBuf){ return RecvData(outBuf); };
-        
+
         // USBDeviceConfig implementation
         virtual uint8_t Init(uint8_t parent, uint8_t port, bool lowspeed);
         virtual uint8_t Release();

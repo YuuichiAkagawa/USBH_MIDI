@@ -45,7 +45,7 @@
 // 5 : TX
 //////////////////////////
 
-USB  Usb;
+USB Usb;
 USBH_MIDI  Midi(&Usb);
 
 void MIDI_poll();
@@ -55,12 +55,12 @@ void setup()
 {
   _MIDI_SERIAL_PORT.begin(31250);
 
-  //Workaround for non UHS2.0 Shield 
-  pinMode(7,OUTPUT);
-  digitalWrite(7,HIGH);
+  //Workaround for non UHS2.0 Shield
+  pinMode(7, OUTPUT);
+  digitalWrite(7, HIGH);
 
   if (Usb.Init() == -1) {
-    while(1); //halt
+    while (1); //halt
   }//if (Usb.Init() == -1...
   delay( 200 );
 }
@@ -71,7 +71,7 @@ void loop()
 
   Usb.Task();
   t1 = micros();
-  if( Usb.getUsbTaskState() == USB_STATE_RUNNING )
+  if ( Usb.getUsbTaskState() == USB_STATE_RUNNING )
   {
     MIDI_poll();
   }
@@ -82,29 +82,29 @@ void loop()
 // Poll USB MIDI Controler and send to serial MIDI
 void MIDI_poll()
 {
-    byte outBuf[ 3 ];
-    uint8_t size;
+  byte outBuf[ 3 ];
+  uint8_t size;
 
-    do {
-      if( (size=Midi.RecvData(outBuf)) > 0 ){
-        //MIDI Output
-        _MIDI_SERIAL_PORT.write(outBuf, size);
-      }
-    }while(size>0);
+  do {
+    if ( (size = Midi.RecvData(outBuf)) > 0 ) {
+      //MIDI Output
+      _MIDI_SERIAL_PORT.write(outBuf, size);
+    }
+  } while (size > 0);
 }
 
 // Delay time (max 16383 us)
 void doDelay(unsigned long t1, unsigned long t2, unsigned long delayTime)
 {
-    unsigned long t3;
+  unsigned long t3;
 
-    if( t1 > t2 ){
-      t3 = (4294967295 - t1 + t2);
-    }else{
-      t3 = t2 - t1;
-    }
+  if ( t1 > t2 ) {
+    t3 = (4294967295 - t1 + t2);
+  } else {
+    t3 = t2 - t1;
+  }
 
-    if( t3 < delayTime ){
-      delayMicroseconds(delayTime - t3);
-    }
+  if ( t3 < delayTime ) {
+    delayMicroseconds(delayTime - t3);
+  }
 }

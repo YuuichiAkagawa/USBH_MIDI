@@ -1,7 +1,7 @@
 /*
  *******************************************************************************
  * USB-MIDI dump utility
- * Copyright 2013-2015 Yuuichi Akagawa
+ * Copyright 2013-2016 Yuuichi Akagawa
  *
  * for use with USB Host Shield 2.0 from Circuitsathome.com
  * https://github.com/felis/USB_Host_Shield_2.0
@@ -60,10 +60,10 @@ void setup()
 
 void loop()
 {
-  unsigned long t1;
+  //unsigned long t1;
 
   Usb.Task();
-  t1 = micros();
+  //t1 = micros();
   if ( Usb.getUsbTaskState() == USB_STATE_RUNNING )
   {
     MIDI_poll();
@@ -86,7 +86,7 @@ void MIDI_poll()
     pid = Midi.pid;
   }
   if (Midi.RecvData( &rcvd,  bufMidi) == 0 ) {
-    sprintf(buf, "%08X: ", millis());
+    sprintf(buf, "%08lX: ", millis());
     Serial.print(buf);
     Serial.print(rcvd);
     Serial.print(':');
@@ -104,7 +104,7 @@ void doDelay(unsigned long t1, unsigned long t2, unsigned long delayTime)
   unsigned long t3;
 
   if ( t1 > t2 ) {
-    t3 = (4294967295 - t1 + t2);
+    t3 = (0xFFFFFFFF - t1 + t2);
   } else {
     t3 = t2 - t1;
   }

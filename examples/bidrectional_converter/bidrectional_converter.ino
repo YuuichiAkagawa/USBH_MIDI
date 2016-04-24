@@ -1,7 +1,7 @@
 /*
  *******************************************************************************
  * Legacy Serial MIDI and USB Host bidirectional converter
- * Copyright 2013-2015 Yuuichi Akagawa
+ * Copyright 2013-2016 Yuuichi Akagawa
  *
  * for use with USB Host Shield 2.0 from Circuitsathome.com
  * https://github.com/felis/USB_Host_Shield_2.0
@@ -117,7 +117,7 @@ void doDelay(unsigned long t1, unsigned long t2, unsigned long delayTime)
   unsigned long t3;
 
   if ( t1 > t2 ) {
-    t3 = (4294967295 - t1 + t2);
+    t3 = (0xFFFFFFFF - t1 + t2);
   } else {
     t3 = t2 - t1;
   }

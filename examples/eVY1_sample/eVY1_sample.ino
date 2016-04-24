@@ -1,7 +1,7 @@
 /*
  *******************************************************************************
  * eVY1 Shield sample - Say 'Konnichiwa'
- * Copyright 2014-2015 Yuuichi Akagawa
+ * Copyright 2014-2016 Yuuichi Akagawa
  *
  * for use with USB Host Shield 2.0 from Circuitsathome.com
  * https://github.com/felis/USB_Host_Shield_2.0
@@ -89,7 +89,7 @@ void MIDI_poll()
     Midi.SendSysEx(exdata, sizeof(exdata));
     delay(500);
   }
-  uint8_t size = Midi.RecvData(inBuf);
+  Midi.RecvData(inBuf);
 }
 
 //note On

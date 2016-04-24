@@ -37,9 +37,6 @@ class USBH_MIDI;
 
 class USBH_MIDI : public USBDeviceConfig
 {
-private:
-        uint8_t lookupMsgSize(uint8_t midiMsg);
-
 protected:
         static const uint8_t    epDataInIndex;          // DataIn endpoint index(MIDI)
         static const uint8_t    epDataOutIndex;         // DataOUT endpoint index(MIDI)
@@ -72,6 +69,7 @@ public:
         uint8_t RecvData(uint16_t *bytes_rcvd, uint8_t *dataptr);
         uint8_t RecvData(uint8_t *outBuf);
         uint8_t SendData(uint8_t *dataptr, byte nCable=0);
+        uint8_t lookupMsgSize(uint8_t midiMsg);
         uint8_t SendSysEx(uint8_t *dataptr, unsigned int datasize, byte nCable=0);
         uint8_t SendRawData(uint16_t bytes_send, uint8_t *dataptr);
         // backward compatibility functions
@@ -82,6 +80,28 @@ public:
         virtual uint8_t Init(uint8_t parent, uint8_t port, bool lowspeed);
         virtual uint8_t Release();
         virtual uint8_t GetAddress() { return bAddress; };
+};
+
+//
+// System Exclusive packet data management class
+//
+class MidiSysEx {
+private:
+        uint8_t pos;
+        byte    buf[MIDI_EVENT_PACKET_SIZE];
+public:
+        typedef enum {
+                nonsysex = 0,
+                ok       = 1,
+                done     = 0xfe,
+                overflow = 0xff
+        } Status;
+
+        MidiSysEx();
+        void clear();
+        MidiSysEx::Status set(byte *p);
+        inline byte *get(){return buf;};
+        inline uint8_t getSize(){return pos;};
 };
 
 #endif //_USBH_MIDI_H_

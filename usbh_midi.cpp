@@ -534,23 +534,23 @@ uint8_t USBH_MIDI::SendSysEx(uint8_t *dataptr, unsigned int datasize, byte nCabl
                 buf[wptr] = (nCable << 4) | 0x4;             //x4 SysEx starts or continues
 
                 switch ( n ) {
-                  case 1 :
+                    case 1 :
                         buf[wptr++] = (nCable << 4) | 0x5;   //x5 SysEx ends with following single byte.
                         buf[wptr++] = *(dataptr++);
                         buf[wptr++] = 0x00;
                         buf[wptr++] = 0x00;
                         n = n - 1;
                         break;
-                  case 2 :
+                    case 2 :
                         buf[wptr++] = (nCable << 4) | 0x6;   //x6 SysEx ends with following two bytes.
                         buf[wptr++] = *(dataptr++);
                         buf[wptr++] = *(dataptr++);
                         buf[wptr++] = 0x00;
                         n = n - 2;
                         break;
-                  case 3 :
+                    case 3 :
                         buf[wptr]   = (nCable << 4) | 0x7;   //x7 SysEx ends with following three bytes.
-                  default :
+                    default :
                         wptr++;
                         buf[wptr++] = *(dataptr++);
                         buf[wptr++] = *(dataptr++);
@@ -561,7 +561,7 @@ uint8_t USBH_MIDI::SendSysEx(uint8_t *dataptr, unsigned int datasize, byte nCabl
 
                 if( wptr >= maxpkt || n == 0 ){ //Reach a maxPktSize or data end.
                         USBTRACE2(" wptr:\t", wptr);
-                        if( rc = pUsb->outTransfer(bAddress, epInfo[epDataOutIndex].epAddr, wptr, buf) ){
+                        if( (rc = pUsb->outTransfer(bAddress, epInfo[epDataOutIndex].epAddr, wptr, buf)) != 0 ){
                                 break;
                         }
                         wptr = 0;  //rewind data pointer
@@ -575,4 +575,62 @@ uint8_t USBH_MIDI::SendRawData(uint16_t bytes_send, uint8_t *dataptr)
 {
         return pUsb->outTransfer(bAddress, epInfo[epDataOutIndex].epAddr, bytes_send, dataptr);
 
+}
+
+//
+// System Exclusive packet data management class
+//
+MidiSysEx::MidiSysEx()
+{
+        clear();
+}
+
+void MidiSysEx::clear()
+{
+        pos = 0;
+        buf[0] = 0;
+}
+
+MidiSysEx::Status MidiSysEx::set(byte *p)
+{
+        MidiSysEx::Status rc = MidiSysEx::ok;
+        byte cin = *(p) & 0x0f;
+
+        //SysEx message?
+        if( (cin & 0xc) != 4 ) return MidiSysEx::nonsysex;
+
+        switch(cin) {
+            case 4:
+            case 7:
+                if( pos+2 < MIDI_EVENT_PACKET_SIZE ) {
+                        buf[pos++] = *(p+1);
+                        buf[pos++] = *(p+2);
+                        buf[pos++] = *(p+3);
+                }else{
+                        rc = MidiSysEx::overflow;
+                }
+                break;
+            case 5:
+                if( pos+1 < MIDI_EVENT_PACKET_SIZE ) {
+                        buf[pos++] = *(p+1);
+                        buf[pos++] = *(p+2);
+                }else{
+                        rc = MidiSysEx::overflow;
+                }
+                break;
+            case 6:
+                if( pos < MIDI_EVENT_PACKET_SIZE ) {
+                        buf[pos++] = *(p+1);
+                }else{
+                        rc = MidiSysEx::overflow;
+                }
+                break;
+            default:
+                break;
+        }
+        //SysEx end?
+        if((cin & 0x3) != 0) {
+                rc = MidiSysEx::done;
+        }
+        return(rc);
 }

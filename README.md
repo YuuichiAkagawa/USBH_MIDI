@@ -1,4 +1,4 @@
-# USBH_MIDI v0.2.2
+# USBH_MIDI v0.3.0
 
 USB-MIDI class driver for Arduino [USB Host Shield 2.0 Library][UHS2]
 
@@ -39,6 +39,10 @@ Project site is [here][GHP].
   note: You must set first byte:0xf0 and last byte:0xf7
 
 ## ChangeLog
+2016.04.24 (0.3.0)
+* Limited support for System Exclusive message on bidirectional_converter example.
+* Add MidiSysEx Class for System Exclusive packet data management.
+
 2016.04.09 (0.2.2)
 * Improve SysExSend() performance.
 * Add SendRawData()

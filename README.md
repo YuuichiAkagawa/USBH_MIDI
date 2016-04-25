@@ -1,4 +1,4 @@
-# USBH_MIDI v0.3.0
+# USBH_MIDI v0.3.1
 
 USB-MIDI class driver for Arduino [USB Host Shield 2.0 Library][UHS2]
 
@@ -13,6 +13,9 @@ Project site is [here][GHP].
 ### for multiple device (with USB hub)
 > File->Examples->USBH_MIDI->USB_MIDI_converter_multi
 
+### for bidirectional conversion
+> File->Examples->USBH_MIDI->bidrectional_converter
+
 ## API
 
 - `uint8_t RecvData(uint8_t *outBuf)`
@@ -25,7 +28,7 @@ Project site is [here][GHP].
   return value is 0:Success, non-zero:Error(MAX3421E HRSLT) and bytes_rcvd is received USB packet length.  
   note: USB packet length is not necessarily the length of the MIDI message.
 
-- `uint8_t SendData(uint8_t *dataptr, byte nCable=0)`
+- `uint8_t SendData(uint8_t *dataptr, uint8_t nCable=0)`
   Send MIDI message. You can set CableNumber(default=0).  
   return value is 0:Success, non-zero:Error(MAX3421E HRSLT)
 
@@ -33,12 +36,15 @@ Project site is [here][GHP].
   Send raw data. You can send any data to MIDI. (no compliant USB-MIDI event packet)  
   return value is 0:Success, non-zero:Error(MAX3421E HRSLT)
 
-- `uint8_t SendSysEx(uint8_t *dataptr, unsigned int datasize, byte nCable=0)`
+- `uint8_t SendSysEx(uint8_t *dataptr, unsigned int datasize, uint8_t nCable=0)`
   Send SysEx MIDI message. You can set CableNumber(default=0).  
   return value is 0:Success, non-zero:Error(MAX3421E HRSLT)  
   note: You must set first byte:0xf0 and last byte:0xf7
 
 ## ChangeLog
+2016.04.26 (0.3.1)
+* Change the type of the variables from byte to uint8_t.
+
 2016.04.24 (0.3.0)
 * Limited support for System Exclusive message on bidirectional_converter example.
 * Add MidiSysEx Class for System Exclusive packet data management.

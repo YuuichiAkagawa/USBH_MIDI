@@ -117,8 +117,8 @@ void MIDI_poll()
 {
   uint8_t size;
 #ifdef USBH_MIDI_SYSEX_ENABLE
-  byte recvBuf[MIDI_EVENT_PACKET_SIZE];
-  byte rcode = 0;     //return code
+  uint8_t recvBuf[MIDI_EVENT_PACKET_SIZE];
+  uint8_t rcode = 0;     //return code
   uint16_t  rcvd;
   uint8_t   readPtr = 0;
 
@@ -130,7 +130,7 @@ void MIDI_poll()
     return ;
   }
 
-  byte *p = recvBuf;
+  uint8_t *p = recvBuf;
   while (readPtr < MIDI_EVENT_PACKET_SIZE)  {
     if (*p == 0 && *(p + 1) == 0) break; //data end
     MidiSysEx::Status rc = sysExData.set(p);
@@ -154,7 +154,7 @@ void MIDI_poll()
     readPtr += 4;
   }
 #else
-  byte outBuf[ 3 ];
+  uint8_t outBuf[ 3 ];
   do {
     if ( (size = Midi.RecvData(outBuf)) > 0 ) {
       //MIDI Output

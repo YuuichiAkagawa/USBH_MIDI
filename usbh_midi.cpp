@@ -236,13 +236,13 @@ FailSetConfDescr:
 }
 
 /* get and parse config descriptor */
-void USBH_MIDI::parseConfigDescr( byte addr, byte conf )
+void USBH_MIDI::parseConfigDescr( uint8_t addr, uint8_t conf )
 {
         uint8_t buf[ DESC_BUFF_SIZE ];
         uint8_t* buf_ptr = buf;
-        byte rcode;
-        byte descr_length;
-        byte descr_type;
+        uint8_t rcode;
+        uint8_t descr_length;
+        uint8_t descr_type;
         unsigned int total_length;
         USB_ENDPOINT_DESCRIPTOR *epDesc;
         boolean isMidi = false;
@@ -348,7 +348,7 @@ uint8_t USBH_MIDI::RecvData(uint16_t *bytes_rcvd, uint8_t *dataptr)
 /* Receive data from MIDI device */
 uint8_t USBH_MIDI::RecvData(uint8_t *outBuf)
 {
-        byte rcode = 0;     //return code
+        uint8_t rcode = 0;     //return code
         uint16_t  rcvd;
 
         if( bPollEnable == false ) return false;
@@ -385,10 +385,10 @@ RecvData_return_from_buffer:
 }
 
 /* Send data to MIDI device */
-uint8_t USBH_MIDI::SendData(uint8_t *dataptr, byte nCable)
+uint8_t USBH_MIDI::SendData(uint8_t *dataptr, uint8_t nCable)
 {
-        byte buf[4];
-        byte msg;
+        uint8_t buf[4];
+        uint8_t msg;
 
         msg = dataptr[0];
         // SysEx long message ?
@@ -422,7 +422,7 @@ uint8_t USBH_MIDI::SendData(uint8_t *dataptr, byte nCable)
                 buf[3] = 0;
                 break;
 
-          //1 bytes message
+          //1 byte message
           case 1 :
           default :
                 buf[2] = 0;
@@ -473,7 +473,7 @@ uint8_t USBH_MIDI::lookupMsgSize(uint8_t midiMsg)
                 msgSize = 2;
                 break;
 
-          //1 bytes messages
+          //1 byte messages
           case 0xf8 : //system realtime message
           case 0xf9 : //system realtime message
           case 0xfa : //system realtime message
@@ -516,9 +516,9 @@ unsigned int USBH_MIDI::countSysExDataSize(uint8_t *dataptr)
 }
 
 /* Send SysEx message to MIDI device */
-uint8_t USBH_MIDI::SendSysEx(uint8_t *dataptr, unsigned int datasize, byte nCable)
+uint8_t USBH_MIDI::SendSysEx(uint8_t *dataptr, unsigned int datasize, uint8_t nCable)
 {
-        byte buf[64];
+        uint8_t buf[64];
         uint8_t rc;
         unsigned int n = datasize;
         unsigned int pktSize = (n*10/3+7)/10*4;   //Calculate total USB MIDI packet size
@@ -591,10 +591,10 @@ void MidiSysEx::clear()
         buf[0] = 0;
 }
 
-MidiSysEx::Status MidiSysEx::set(byte *p)
+MidiSysEx::Status MidiSysEx::set(uint8_t *p)
 {
         MidiSysEx::Status rc = MidiSysEx::ok;
-        byte cin = *(p) & 0x0f;
+        uint8_t cin = *(p) & 0x0f;
 
         //SysEx message?
         if( (cin & 0xc) != 4 ) return MidiSysEx::nonsysex;

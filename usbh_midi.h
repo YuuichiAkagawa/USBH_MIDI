@@ -57,7 +57,7 @@ protected:
         uint8_t recvBuf[MIDI_EVENT_PACKET_SIZE];
         uint8_t readPtr;
 
-        void parseConfigDescr(byte addr, byte conf);
+        void parseConfigDescr(uint8_t addr, uint8_t conf);
         unsigned int countSysExDataSize(uint8_t *dataptr);
 #ifdef DEBUG_USB_HOST
         void PrintEndpointDescriptor( const USB_ENDPOINT_DESCRIPTOR* ep_ptr );
@@ -68,9 +68,9 @@ public:
         // Methods for recieving and sending data
         uint8_t RecvData(uint16_t *bytes_rcvd, uint8_t *dataptr);
         uint8_t RecvData(uint8_t *outBuf);
-        uint8_t SendData(uint8_t *dataptr, byte nCable=0);
+        uint8_t SendData(uint8_t *dataptr, uint8_t nCable=0);
         uint8_t lookupMsgSize(uint8_t midiMsg);
-        uint8_t SendSysEx(uint8_t *dataptr, unsigned int datasize, byte nCable=0);
+        uint8_t SendSysEx(uint8_t *dataptr, unsigned int datasize, uint8_t nCable=0);
         uint8_t SendRawData(uint16_t bytes_send, uint8_t *dataptr);
         // backward compatibility functions
         inline uint8_t RcvData(uint16_t *bytes_rcvd, uint8_t *dataptr){ return RecvData(bytes_rcvd, dataptr); };
@@ -88,7 +88,7 @@ public:
 class MidiSysEx {
 private:
         uint8_t pos;
-        byte    buf[MIDI_EVENT_PACKET_SIZE];
+        uint8_t buf[MIDI_EVENT_PACKET_SIZE];
 public:
         typedef enum {
                 nonsysex = 0,
@@ -99,8 +99,8 @@ public:
 
         MidiSysEx();
         void clear();
-        MidiSysEx::Status set(byte *p);
-        inline byte *get(){return buf;};
+        MidiSysEx::Status set(uint8_t *p);
+        inline uint8_t *get(){return buf;};
         inline uint8_t getSize(){return pos;};
 };
 

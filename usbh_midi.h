@@ -33,6 +33,7 @@
 #define USB_SUBCLASS_MIDISTREAMING 3
 #define DESC_BUFF_SIZE        256
 #define MIDI_EVENT_PACKET_SIZE 64
+#define MIDI_SYSEX_BUFFER_SIZE 64
 class USBH_MIDI;
 
 class USBH_MIDI : public USBDeviceConfig
@@ -88,7 +89,7 @@ public:
 class MidiSysEx {
 private:
         uint8_t pos;
-        uint8_t buf[MIDI_EVENT_PACKET_SIZE];
+        uint8_t buf[MIDI_SYSEX_BUFFER_SIZE];
 public:
         typedef enum {
                 nonsysex = 0,
@@ -100,6 +101,7 @@ public:
         MidiSysEx();
         void clear();
         MidiSysEx::Status set(uint8_t *p);
+        uint8_t extract(uint8_t *p, uint8_t *buf);
         inline uint8_t *get(){return buf;};
         inline uint8_t getSize(){return pos;};
 };

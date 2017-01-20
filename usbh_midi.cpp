@@ -596,7 +596,7 @@ MidiSysEx::Status MidiSysEx::set(uint8_t *p)
         switch(cin) {
             case 4:
             case 7:
-                if( pos+2 < MIDI_EVENT_PACKET_SIZE ) {
+                if( pos+2 < MIDI_SYSEX_BUFFER_SIZE ) {
                         buf[pos++] = *(p+1);
                         buf[pos++] = *(p+2);
                         buf[pos++] = *(p+3);
@@ -605,7 +605,7 @@ MidiSysEx::Status MidiSysEx::set(uint8_t *p)
                 }
                 break;
             case 5:
-                if( pos+1 < MIDI_EVENT_PACKET_SIZE ) {
+                if( pos+1 < MIDI_SYSEX_BUFFER_SIZE ) {
                         buf[pos++] = *(p+1);
                         buf[pos++] = *(p+2);
                 }else{
@@ -613,7 +613,7 @@ MidiSysEx::Status MidiSysEx::set(uint8_t *p)
                 }
                 break;
             case 6:
-                if( pos < MIDI_EVENT_PACKET_SIZE ) {
+                if( pos < MIDI_SYSEX_BUFFER_SIZE ) {
                         buf[pos++] = *(p+1);
                 }else{
                         rc = MidiSysEx::overflow;
@@ -625,6 +625,37 @@ MidiSysEx::Status MidiSysEx::set(uint8_t *p)
         //SysEx end?
         if((cin & 0x3) != 0) {
                 rc = MidiSysEx::done;
+        }
+        return(rc);
+}
+
+uint8_t MidiSysEx::extract(uint8_t *p, uint8_t *buf)
+{
+        uint8_t rc = 0;
+        uint8_t cin = *(p) & 0x0f;
+
+        //SysEx message?
+        if( (cin & 0xc) != 4 ) return rc;
+
+        switch(cin) {
+            case 4:
+            case 7:
+                *buf++ = *(p+1);
+                *buf++ = *(p+2);
+                *buf++ = *(p+3);
+                rc = 3;
+                break;
+            case 5:
+                *buf++ = *(p+1);
+                *buf++ = *(p+2);
+                rc = 2;
+                break;
+            case 6:
+                *buf++ = *(p+1);
+                rc = 2;
+                break;
+            default:
+                break;
         }
         return(rc);
 }

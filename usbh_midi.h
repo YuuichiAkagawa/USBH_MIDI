@@ -1,7 +1,7 @@
 /*
  *******************************************************************************
  * USB-MIDI class driver for USB Host Shield 2.0 Library
- * Copyright (c) 2012-2016 Yuuichi Akagawa
+ * Copyright (c) 2012-2017 Yuuichi Akagawa
  *
  * Idea from LPK25 USB-MIDI to Serial MIDI converter
  *   by Collin Cunningham - makezine.com, narbotic.com
@@ -57,7 +57,7 @@ protected:
         uint8_t recvBuf[MIDI_EVENT_PACKET_SIZE];
         uint8_t readPtr;
 
-        void parseConfigDescr(uint8_t addr, uint8_t conf);
+        uint8_t parseConfigDescr(uint8_t addr, uint8_t conf);
         unsigned int countSysExDataSize(uint8_t *dataptr);
 #ifdef DEBUG_USB_HOST
         void PrintEndpointDescriptor( const USB_ENDPOINT_DESCRIPTOR* ep_ptr );

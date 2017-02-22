@@ -1,4 +1,4 @@
-# USBH_MIDI v0.3.1
+# USBH_MIDI v0.3.2
 
 USB-MIDI class driver for Arduino [USB Host Shield 2.0 Library][UHS2]
 
@@ -10,38 +10,61 @@ Project site is [here][GHP].
 ### for single device
 > File->Examples->USBH_MIDI->USB_MIDI_converter
 
+### for single device with SysEx support
+> File->Examples->USBH_MIDI->USB_MIDI_converter_wSysEx
+
 ### for multiple device (with USB hub)
 > File->Examples->USBH_MIDI->USB_MIDI_converter_multi
 
 ### for bidirectional conversion
-> File->Examples->USBH_MIDI->bidrectional_converter
+> File->Examples->USBH_MIDI->bidirectional_converter
 
 ## API
 
 - `uint8_t RecvData(uint8_t *outBuf)`
+
   Receive MIDI message (3 bytes)  
   return value is MIDI message length(0-3)
 
 - `uint8_t RecvData(uint16_t *bytes_rcvd, uint8_t *dataptr)`
+
   Receive raw USB-MIDI Event Packets (each 4 bytes, upto 64 bytes)  
   `dataptr` must allocate 64bytes buffer.  
   return value is 0:Success, non-zero:Error(MAX3421E HRSLT) and bytes_rcvd is received USB packet length.  
   note: USB packet length is not necessarily the length of the MIDI message.
 
+- `uint8_t RecvRawData(uint8_t *outBuf)`
+
+  Receive MIDI Event Packet (4 bytes)  
+  return value is MIDI message length(0-3)
+
 - `uint8_t SendData(uint8_t *dataptr, uint8_t nCable=0)`
+
   Send MIDI message. You can set CableNumber(default=0).  
   return value is 0:Success, non-zero:Error(MAX3421E HRSLT)
 
 - `uint8_t SendRawData(uint16_t bytes_send, uint8_t *dataptr)`
+
   Send raw data. You can send any data to MIDI. (no compliant USB-MIDI event packet)  
   return value is 0:Success, non-zero:Error(MAX3421E HRSLT)
 
-- `uint8_t SendSysEx(uint8_t *dataptr, unsigned int datasize, uint8_t nCable=0)`
+- `uint8_t SendSysEx(uint8_t *dataptr, uint8_t datasize, uint8_t nCable=0)`
+
   Send SysEx MIDI message. You can set CableNumber(default=0).  
   return value is 0:Success, non-zero:Error(MAX3421E HRSLT)  
-  note: You must set first byte:0xf0 and last byte:0xf7
+  note:
+  - You must set first byte:0xf0 and last byte:0xf7
+  - Max message length is up to 256 bytes. If you want extend it change the MIDI_MAX_SYSEX_SIZE.
 
 ## ChangeLog
+2017.02.22 (0.3.2)
+* Improve reconnect stability.
+* Fix for MIDI out only device support. 
+* Update SysEx code
+* Remove MidiSysEx class
+* Add new example USB_MIDI_converter_wSysEx
+* Fix typo: the example name was corrected from 'bidrectional_converter' to 'bidirectional_converter'.
+
 2016.04.26 (0.3.1)
 * Change the type of the variables from byte to uint8_t.
 

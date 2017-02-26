@@ -255,7 +255,7 @@ uint8_t USBH_MIDI::parseConfigDescr( uint8_t addr, uint8_t conf )
         uint8_t descr_type;
         unsigned int total_length;
         USB_ENDPOINT_DESCRIPTOR *epDesc;
-        boolean isMidi = false;
+        bool isMidi = false;
 
         // get configuration descriptor (get descriptor size only)
         rcode = pUsb->getConfDescr( addr, 0, 4, conf, buf );

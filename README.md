@@ -56,6 +56,14 @@ Project site is [here][GHP].
   - You must set first byte:0xf0 and last byte:0xf7
   - Max message length is up to 256 bytes. If you want extend it change the MIDI_MAX_SYSEX_SIZE.
 
+- `uint16_t idVendor())`
+
+  Get the vendor ID.
+
+- `uint16_t idProduct())`
+
+  Get the product ID.
+
 ## ChangeLog
 2017.02.22 (0.3.2)
 * Improve reconnect stability.

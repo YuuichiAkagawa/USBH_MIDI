@@ -1,7 +1,7 @@
 /*
  *******************************************************************************
  * USB-MIDI class driver for USB Host Shield 2.0 Library
- * Copyright (c) 2012-2017 Yuuichi Akagawa
+ * Copyright (c) 2012-2018 Yuuichi Akagawa
  *
  * Idea from LPK25 USB-MIDI to Serial MIDI converter
  *   by Collin Cunningham - makezine.com, narbotic.com
@@ -50,8 +50,8 @@ protected:
         uint8_t  bConfNum;    // configuration number
         uint8_t  bNumEP;      // total number of EP in the configuration
         bool     bPollEnable;
-
-        bool isMidiFound;
+        bool     isMidiFound;
+        uint16_t pid, vid;    // ProductID, VendorID
         /* Endpoint data structure */
         EpInfo  epInfo[MIDI_MAX_ENDPOINTS];
         /* MIDI Event packet buffer */
@@ -64,8 +64,11 @@ protected:
         void PrintEndpointDescriptor( const USB_ENDPOINT_DESCRIPTOR* ep_ptr );
 #endif
 public:
-        uint16_t pid, vid;
         USBH_MIDI(USB *p);
+        // Misc functions
+        operator bool() { return (pUsb->getUsbTaskState()==USB_STATE_RUNNING); }
+        uint16_t idVendor() { return vid; }
+        uint16_t idProduct() { return pid; }
         // Methods for recieving and sending data
         uint8_t RecvData(uint16_t *bytes_rcvd, uint8_t *dataptr);
         uint8_t RecvData(uint8_t *outBuf, bool isRaw=false);
@@ -76,8 +79,8 @@ public:
         uint8_t extractSysExData(uint8_t *p, uint8_t *buf);
         uint8_t SendRawData(uint16_t bytes_send, uint8_t *dataptr);
         // backward compatibility functions
-        inline uint8_t RcvData(uint16_t *bytes_rcvd, uint8_t *dataptr){ return RecvData(bytes_rcvd, dataptr); };
-        inline uint8_t RcvData(uint8_t *outBuf){ return RecvData(outBuf); };
+        inline uint8_t RcvData(uint16_t *bytes_rcvd, uint8_t *dataptr) { return RecvData(bytes_rcvd, dataptr); };
+        inline uint8_t RcvData(uint8_t *outBuf) { return RecvData(outBuf); };
 
         // USBDeviceConfig implementation
         virtual uint8_t Init(uint8_t parent, uint8_t port, bool lowspeed);

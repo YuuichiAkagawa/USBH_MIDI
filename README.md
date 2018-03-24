@@ -1,4 +1,4 @@
-# USBH_MIDI v0.3.2
+# USBH_MIDI v0.4.0
 
 USB-MIDI class driver for Arduino [USB Host Shield 2.0 Library][UHS2]
 
@@ -65,6 +65,12 @@ Project site is [here][GHP].
   Get the product ID.
 
 ## ChangeLog
+2018.03.24 (0.4.0)
+* Add boolean operator
+* Add idVendor()/idProduct() function. vid/pid variables have been change to private.
+* Update the examples using new feature.
+* Vendor/Device specific setup (workaround for novation LaunchPad series)
+
 2017.02.22 (0.3.2)
 * Improve reconnect stability.
 * Fix for MIDI out only device support. 

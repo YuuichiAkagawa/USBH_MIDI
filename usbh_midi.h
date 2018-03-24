@@ -52,6 +52,7 @@ protected:
         bool     bPollEnable;
         bool     isMidiFound;
         uint16_t pid, vid;    // ProductID, VendorID
+        uint8_t  bTransferTypeMask;
         /* Endpoint data structure */
         EpInfo  epInfo[MIDI_MAX_ENDPOINTS];
         /* MIDI Event packet buffer */
@@ -60,6 +61,7 @@ protected:
 
         uint8_t parseConfigDescr(uint8_t addr, uint8_t conf);
         uint16_t countSysExDataSize(uint8_t *dataptr);
+        void setupDeviceSpecific();
 #ifdef DEBUG_USB_HOST
         void PrintEndpointDescriptor( const USB_ENDPOINT_DESCRIPTOR* ep_ptr );
 #endif

@@ -10,9 +10,9 @@ USBH_MIDI	KEYWORD1
 #######################################
 # Methods and Functions (KEYWORD2)
 #######################################
-RecvData	KEYWORKD2
-SendData	KEYWORKD2
-SendSysEx	KEYWORKD2
+RecvData	KEYWORD2
+SendData	KEYWORD2
+SendSysEx	KEYWORD2
 
 #######################################
 # Instances (KEYWORD2)

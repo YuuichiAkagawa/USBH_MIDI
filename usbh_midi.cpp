@@ -346,8 +346,10 @@ void USBH_MIDI::setupDeviceSpecific()
 {
         // Novation
         if( vid == 0x1235 ) {
-                // LaunchPad's endpoint attirbute is interrupt (0x20:S, 0x36:Mini, 0x51:Pro, 0x69:MK2)
-                if(pid == 0x20 || pid == 0x36 || pid == 0x51 || pid == 0x69 ) {
+                // LaunchPad and LaunchKey endpoint attribute is interrupt 
+                // LaunchPad: 0x20:S, 0x36:Mini, 0x51:Pro, 0x69:MK2
+                // LaunchKey: 0x35:Mini
+                if(pid == 0x20 || pid == 0x35 ||  pid == 0x36 || pid == 0x51 || pid == 0x69 ) {
                         bTransferTypeMask = 2;
                 }
         }

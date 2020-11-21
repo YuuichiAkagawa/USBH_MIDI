@@ -1,6 +1,6 @@
-# USBH_MIDI v0.4.0
+# USBH_MIDI v0.4.1
 
-USB-MIDI class driver for Arduino [USB Host Shield 2.0 Library][UHS2]
+USB-MIDI 1.0 class driver for Arduino [USB Host Shield 2.0 Library][UHS2]
 
 USBH_MIDI is USB-MIDI class driver for Arduino USB Host Shield 2.0 Library.  
 USBH_MIDI is included in [USB Host Shield 2.0 Library][UHS2]. You don't need install separatery.
@@ -18,6 +18,10 @@ Project site is [here][GHP].
 
 ### for bidirectional conversion
 > File->Examples->USBH_MIDI->bidirectional_converter
+
+### Retrieve your USB-MIDI device descriptors
+> File->Examples->USBH_MIDI->USB_MIDI_desc
+If your device does not work, please report this information.
 
 ## API
 
@@ -65,6 +69,10 @@ Project site is [here][GHP].
   Get the product ID.
 
 ## ChangeLog
+2020.11.21 (0.4.1)
+* Add new example USB_MIDI_desc
+* Update vender specific code for Novation
+
 2018.03.24 (0.4.0)
 * Add boolean operator
 * Add idVendor()/idProduct() function. vid/pid variables have been change to private.

@@ -148,6 +148,7 @@ uint8_t USBH_MIDI::Init(uint8_t parent, uint8_t port, bool lowspeed)
         p->lowspeed = lowspeed;
 
         // First Device Descriptor Request (Initially first 8 bytes)
+        // https://techcommunity.microsoft.com/t5/microsoft-usb-blog/how-does-usb-stack-enumerate-a-device/ba-p/270685#_First_Device_Descriptor
         rcode = pUsb->getDevDescr( 0, 0, 8, (uint8_t*)buf );
 
         // Restore p->epinfo
@@ -605,6 +606,7 @@ uint8_t USBH_MIDI::SendSysEx(uint8_t *dataptr, uint16_t datasize, uint8_t nCable
                         break;
                     case 3 :
                         buf[wptr]   = (nCable << 4) | 0x7;   //x7 SysEx ends with following three bytes.
+                        // fall through
                     default :
                         wptr++;
                         buf[wptr++] = *(dataptr++);

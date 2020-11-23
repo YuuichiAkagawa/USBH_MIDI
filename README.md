@@ -1,4 +1,4 @@
-# USBH_MIDI v0.4.1
+# USBH_MIDI v0.5.0
 
 USB-MIDI 1.0 class driver for Arduino [USB Host Shield 2.0 Library][UHS2]
 
@@ -19,7 +19,7 @@ Project site is [here][GHP].
 ### for bidirectional conversion
 > File->Examples->USBH_MIDI->bidirectional_converter
 
-### Retrieve your USB-MIDI device descriptors
+### Examine the descriptor of your USB-MIDI device.
 > File->Examples->USBH_MIDI->USB_MIDI_desc
 If your device does not work, please report this information.
 
@@ -69,6 +69,9 @@ If your device does not work, please report this information.
   Get the product ID.
 
 ## ChangeLog
+2020.11.23 (0.5.0)
+* Change to Windows style enumeration process.
+
 2020.11.21 (0.4.1)
 * Add new example USB_MIDI_desc
 * Update vender specific code for Novation

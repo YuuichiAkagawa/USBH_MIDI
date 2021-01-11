@@ -68,7 +68,7 @@ protected:
 public:
         USBH_MIDI(USB *p);
         // Misc functions
-        operator bool() { return (pUsb->getUsbTaskState()==USB_STATE_RUNNING); }
+        operator bool() { return (bPollEnable); }
         uint16_t idVendor() { return vid; }
         uint16_t idProduct() { return pid; }
         // Methods for recieving and sending data

@@ -69,6 +69,9 @@ If your device does not work, please report this information.
   Get the product ID.
 
 ## ChangeLog
+2021.1.11 (0.5.1)
+* Fix for bool operator.
+
 2020.11.23 (0.5.0)
 * Change to Windows style enumeration process.
 

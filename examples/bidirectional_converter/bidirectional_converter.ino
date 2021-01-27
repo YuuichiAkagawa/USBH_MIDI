@@ -1,7 +1,7 @@
 /*
  *******************************************************************************
    Legacy Serial MIDI and USB Host bidirectional converter
-   Copyright (C) 2013-2017 Yuuichi Akagawa
+   Copyright (C) 2013-2021 Yuuichi Akagawa
 
    for use with Arduino MIDI library
    https://github.com/FortySevenEffects/arduino_midi_library/
@@ -83,6 +83,9 @@ void loop()
           //SysEx is handled by event.
           break;
         default :
+          if( msg[0] < 0xf0 ){
+            msg[0] |= MIDI.getChannel() - 1;
+          }
           msg[1] = MIDI.getData1();
           msg[2] = MIDI.getData2();
           Midi.SendData(msg, 0);

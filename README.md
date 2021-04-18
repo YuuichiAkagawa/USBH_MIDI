@@ -1,4 +1,4 @@
-# USBH_MIDI v0.5.0
+# USBH_MIDI v0.6.0
 
 USB-MIDI 1.0 class driver for Arduino [USB Host Shield 2.0 Library][UHS2]
 
@@ -68,7 +68,16 @@ If your device does not work, please report this information.
 
   Get the product ID.
 
+- `uint8_t GetAddress()`
+
+  Get the USB device address.
+
 ## ChangeLog
+2021.4.18 
+* Change configuration descriptor parser. Supports large descriptors.
+* Fixed an issue when the endpoint size exceeded 256 bytes.
+* Add a predefined macro "USBH_MIDI_VERSION".
+
 2021.1.11 (0.5.1)
 * Fix for bool operator.
 
@@ -150,7 +159,7 @@ If your device does not work, please report this information.
 
 ## License
 
-Copyright &copy; 2012-2015 Yuuichi Akagawa
+Copyright &copy; 2012-2021 Yuuichi Akagawa
 
 Licensed under the [GNU General Public License v2.0][GPL2]
 

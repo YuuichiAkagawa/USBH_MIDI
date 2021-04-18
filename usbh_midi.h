@@ -1,7 +1,7 @@
 /*
  *******************************************************************************
  * USB-MIDI class driver for USB Host Shield 2.0 Library
- * Copyright (c) 2012-2018 Yuuichi Akagawa
+ * Copyright (c) 2012-2021 Yuuichi Akagawa
  *
  * Idea from LPK25 USB-MIDI to Serial MIDI converter
  *   by Collin Cunningham - makezine.com, narbotic.com
@@ -26,31 +26,62 @@
 
 #if !defined(_USBH_MIDI_H_)
 #define _USBH_MIDI_H_
-//#define DEBUG_USB_HOST
 #include "Usb.h"
 
-#define MIDI_MAX_ENDPOINTS 5 //endpoint 0, bulk_IN(MIDI), bulk_OUT(MIDI), bulk_IN(VSP), bulk_OUT(VSP)
+#define USBH_MIDI_VERSION 600
+#define MIDI_MAX_ENDPOINTS 3 //endpoint 0, bulk_IN(MIDI), bulk_OUT(MIDI)
 #define USB_SUBCLASS_MIDISTREAMING 3
-#define DESC_BUFF_SIZE        256
 #define MIDI_EVENT_PACKET_SIZE 64
 #define MIDI_MAX_SYSEX_SIZE   256
-class USBH_MIDI;
 
-class USBH_MIDI : public USBDeviceConfig
+// Endpoint Descriptor extracter Class
+class UsbMidiConfigXtracter {
+public:
+        //virtual void ConfigXtract(const USB_CONFIGURATION_DESCRIPTOR *conf) = 0;
+        //virtual void InterfaceXtract(uint8_t conf, const USB_INTERFACE_DESCRIPTOR *iface) = 0;
+
+        virtual bool EndpointXtract(uint8_t conf __attribute__((unused)), uint8_t iface __attribute__((unused)), uint8_t alt __attribute__((unused)), uint8_t proto __attribute__((unused)), const USB_ENDPOINT_DESCRIPTOR *ep __attribute__((unused))) {
+                return true;
+        };
+};
+// Configuration Descriptor Parser Class
+class MidiDescParser : public USBReadParser {
+        UsbMidiConfigXtracter *theXtractor;
+        MultiValueBuffer theBuffer;
+        MultiByteValueParser valParser;
+        ByteSkipper theSkipper;
+        uint8_t varBuffer[16 /*sizeof(USB_CONFIGURATION_DESCRIPTOR)*/];
+
+        uint8_t stateParseDescr; // ParseDescriptor state
+
+        uint8_t dscrLen; // Descriptor length
+        uint8_t dscrType; // Descriptor type
+        uint8_t nEPs; // number of valid endpoint
+        bool ifMode; //Configuration mode true: MIDI, false: Vendor specific
+
+        bool isGoodInterface; // Apropriate interface flag
+        uint8_t confValue; // Configuration value
+
+        bool ParseDescriptor(uint8_t **pp, uint16_t *pcntdn);
+
+public:
+        MidiDescParser(UsbMidiConfigXtracter *xtractor, bool modeMidi);
+        void Parse(const uint16_t len, const uint8_t *pbuf, const uint16_t &offset);
+        inline uint8_t getConfValue() { return confValue; };
+        inline uint8_t getNumEPs() { return nEPs; };
+};
+
+/** This class implements support for a MIDI device. */
+class USBH_MIDI : public USBDeviceConfig, public UsbMidiConfigXtracter
 {
 protected:
-        static const uint8_t    epDataInIndex;          // DataIn endpoint index(MIDI)
-        static const uint8_t    epDataOutIndex;         // DataOUT endpoint index(MIDI)
-        static const uint8_t    epDataInIndexVSP;       // DataIn endpoint index(Vendor Specific Protocl)
-        static const uint8_t    epDataOutIndexVSP;      // DataOUT endpoint index(Vendor Specific Protocl)
+        static const uint8_t    epDataInIndex = 1;          // DataIn endpoint index(MIDI)
+        static const uint8_t    epDataOutIndex= 2;         // DataOUT endpoint index(MIDI)
 
         /* mandatory members */
         USB      *pUsb;
         uint8_t  bAddress;
-        uint8_t  bConfNum;    // configuration number
-        uint8_t  bNumEP;      // total number of EP in the configuration
         bool     bPollEnable;
-        bool     isMidiFound;
         uint16_t pid, vid;    // ProductID, VendorID
         uint8_t  bTransferTypeMask;
         /* Endpoint data structure */
@@ -59,9 +90,12 @@ protected:
         uint8_t recvBuf[MIDI_EVENT_PACKET_SIZE];
         uint8_t readPtr;
 
-        uint8_t parseConfigDescr(uint8_t addr, uint8_t conf);
         uint16_t countSysExDataSize(uint8_t *dataptr);
         void setupDeviceSpecific();
+
+        /* UsbConfigXtracter implementation */
+        bool EndpointXtract(uint8_t conf, uint8_t iface, uint8_t alt, uint8_t proto, const USB_ENDPOINT_DESCRIPTOR *ep);
+
 #ifdef DEBUG_USB_HOST
         void PrintEndpointDescriptor( const USB_ENDPOINT_DESCRIPTOR* ep_ptr );
 #endif
@@ -89,4 +123,5 @@ public:
         virtual uint8_t Release();
         virtual uint8_t GetAddress() { return bAddress; };
 };
+
 #endif //_USBH_MIDI_H_

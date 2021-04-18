@@ -60,6 +60,11 @@ If your device does not work, please report this information.
   - You must set first byte:0xf0 and last byte:0xf7
   - Max message length is up to 256 bytes. If you want extend it change the MIDI_MAX_SYSEX_SIZE.
 
+- `void attachOnInit(void (*funcOnInit)(void))`
+
+  Register a user function to call when the controller is successfully initialized.  
+  See 'eVY1_sample' example.
+
 - `uint16_t idVendor())`
 
   Get the vendor ID.
@@ -75,7 +80,8 @@ If your device does not work, please report this information.
 ## ChangeLog
 2021.4.18 
 * Change configuration descriptor parser. Supports large descriptors.
-* Fixed an issue when the endpoint size exceeded 256 bytes.
+* Fixed an issue when the endpoint size exceeded 64 bytes.
+* Add OnInit() callback
 * Add a predefined macro "USBH_MIDI_VERSION".
 
 2021.1.11 (0.5.1)

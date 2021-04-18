@@ -1,27 +1,11 @@
 /*
  *******************************************************************************
- * eVY1 Shield sample - Say 'Konnichiwa'
- * Copyright 2014-2016 Yuuichi Akagawa
- *
- * for use with USB Host Shield 2.0 from Circuitsathome.com
- * https://github.com/felis/USB_Host_Shield_2.0
- *
- * This is sample program. Do not expect perfect behavior.
+   eVY1 Shield sample - Say 'Konnichiwa'
+   Copyright (C) 2014-2021 Yuuichi Akagawa
+
+   This is sample program. Do not expect perfect behavior.
  *******************************************************************************
- * This program is free software; you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation; either version 2 of the License, or
- * (at your option) any later version.
- *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with this program.  If not, see <http://www.gnu.org/licenses/>
- *******************************************************************************
- */
+*/
 #include <usbh_midi.h>
 #include <usbhub.h>
 
@@ -39,7 +23,6 @@ void MIDI_poll();
 void noteOn(uint8_t note);
 void noteOff(uint8_t note);
 
-uint16_t pid, vid;
 uint8_t exdata[] = {
   0xf0, 0x43, 0x79, 0x09, 0x00, 0x50, 0x10,
   'k', ' ', 'o', ',', //Ko
@@ -50,12 +33,16 @@ uint8_t exdata[] = {
   0x00, 0xf7
 };
 
+void onInit()
+{
+  // Send Phonetic symbols via SysEx
+  Midi.SendSysEx(exdata, sizeof(exdata));
+  delay(500);
+}
+
 void setup()
 {
-  vid = pid = 0;
-  Serial.begin(115200);
-
-  //Workaround for non UHS2.0 Shield
+  //Workaround for UHS1 Shield
   pinMode(7, OUTPUT);
   digitalWrite(7, HIGH);
 
@@ -63,12 +50,15 @@ void setup()
     while (1); //halt
   }//if (Usb.Init() == -1...
   delay( 200 );
+
+  // Register onInit() function
+  Midi.attachOnInit(onInit);
 }
 
 void loop()
 {
   Usb.Task();
-  if( Midi ) {
+  if ( Midi ) {
     MIDI_poll();
     noteOn(0x3f);
     delay(400);
@@ -81,13 +71,6 @@ void loop()
 void MIDI_poll()
 {
   uint8_t inBuf[ 3 ];
-
-  //first call?
-  if (Midi.idVendor() != vid || Midi.idProduct() != pid) {
-    vid = Midi.idVendor(); pid = Midi.idProduct();
-    Midi.SendSysEx(exdata, sizeof(exdata));
-    delay(500);
-  }
   Midi.RecvData(inBuf);
 }
 

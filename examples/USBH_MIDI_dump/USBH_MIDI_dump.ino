@@ -1,25 +1,12 @@
 /*
  *******************************************************************************
  * USB-MIDI dump utility
- * Copyright 2013-2017 Yuuichi Akagawa
+ * Copyright (C) 2013-2021 Yuuichi Akagawa
  *
  * for use with USB Host Shield 2.0 from Circuitsathome.com
  * https://github.com/felis/USB_Host_Shield_2.0
  *
  * This is sample program. Do not expect perfect behavior.
- *******************************************************************************
- * This program is free software; you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation; either version 2 of the License, or
- * (at your option) any later version.
- *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with this program.  If not, see <http://www.gnu.org/licenses/>
  *******************************************************************************
  */
 
@@ -33,19 +20,25 @@
 #include <SPI.h>
 
 USB Usb;
-//USBHub Hub(&Usb);
+USBHub Hub(&Usb);
 USBH_MIDI  Midi(&Usb);
 
 void MIDI_poll();
 
-uint16_t pid, vid;
+void onInit()
+{
+  char buf[20];
+  uint16_t vid = Midi.idVendor();
+  uint16_t pid = Midi.idProduct();
+  sprintf(buf, "VID:%04X, PID:%04X", vid, pid);
+  Serial.println(buf); 
+}
 
 void setup()
 {
-  vid = pid = 0;
   Serial.begin(115200);
 
-  //Workaround for non UHS2.0 Shield
+  //Workaround for UHS1 Shield
   pinMode(7, OUTPUT);
   digitalWrite(7, HIGH);
 
@@ -53,12 +46,14 @@ void setup()
     while (1); //halt
   }//if (Usb.Init() == -1...
   delay( 200 );
+
+  // Register onInit() function
+  Midi.attachOnInit(onInit);
 }
 
 void loop()
 {
   Usb.Task();
-  //uint32_t t1 = (uint32_t)micros();
   if ( Midi ) {
     MIDI_poll();
   }
@@ -71,12 +66,6 @@ void MIDI_poll()
   uint8_t bufMidi[64];
   uint16_t  rcvd;
 
-  if (Midi.idVendor() != vid || Midi.idProduct() != pid) {
-    vid = Midi.idVendor();
-    pid = Midi.idProduct();
-    sprintf(buf, "VID:%04X, PID:%04X", vid, pid);
-    Serial.println(buf);
-  }
   if (Midi.RecvData( &rcvd,  bufMidi) == 0 ) {
     uint32_t time = (uint32_t)millis();
     sprintf(buf, "%04X%04X: ", (uint16_t)(time >> 16), (uint16_t)(time & 0xFFFF)); // Split variable to prevent warnings on the ESP8266 platform
@@ -90,4 +79,3 @@ void MIDI_poll()
     Serial.println("");
   }
 }
-

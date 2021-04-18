@@ -122,6 +122,12 @@ public:
         virtual uint8_t Init(uint8_t parent, uint8_t port, bool lowspeed);
         virtual uint8_t Release();
         virtual uint8_t GetAddress() { return bAddress; };
+
+        void attachOnInit(void (*funcOnInit)(void)) {
+                pFuncOnInit = funcOnInit;
+        };
+private:
+        void (*pFuncOnInit)(void) = nullptr; // Pointer to function called in onInit()
 };
 
 #endif //_USBH_MIDI_H_

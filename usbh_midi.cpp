@@ -249,9 +249,12 @@ uint8_t USBH_MIDI::Init(uint8_t parent, uint8_t port, bool lowspeed)
 
         // Set Configuration Value
         rcode = pUsb->setConf(bAddress, 0, bConfNum);
-        if (rcode) {
+        if (rcode)
                 goto FailSetConfDescr;
-        }
+
+        if(pFuncOnInit)
+                pFuncOnInit(); // Call the user function
+
         bPollEnable = true;
         USBTRACE("Init done.\r\n");
         return 0;

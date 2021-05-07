@@ -1,0 +1,8 @@
+title: USBH_MIDI
+description: USB MIDI class driver for Arduino USB Host Shield 2.0 Library
+google_analytics: 
+show_downloads: true
+theme: jekyll-theme-hacker
+
+gems:
+  - jekyll-mentions

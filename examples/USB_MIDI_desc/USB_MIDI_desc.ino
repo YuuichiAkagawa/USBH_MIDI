@@ -9,11 +9,6 @@
  */
 
 #include <usbhub.h>
-// Satisfy the IDE, which needs to see the include statment in the ino too.
-#ifdef dobogusinclude
-#include <spi4teensy3.h>
-#endif
-#include <SPI.h>
 
 USB     Usb;
 //USBHub  Hub1(&Usb);
@@ -290,7 +285,7 @@ uint8_t getdevdescr( uint8_t addr, uint8_t &num_conf )
   return ( 0 );
 }
 
-void printhubdescr(uint8_t *descrptr, uint8_t addr)
+void printhubdescr(uint8_t *descrptr)
 {
   HubDescriptor  *pHub = (HubDescriptor*) descrptr;
   uint8_t        len = *((uint8_t*)descrptr);
@@ -341,7 +336,7 @@ uint8_t getconfdescr( uint8_t addr, uint8_t conf )
   uint8_t descr_length;
   uint8_t descr_type;
   uint16_t total_length;
-  bool isMidiStreaming;
+  bool isMidiStreaming = false;
   rcode = Usb.getConfDescr( addr, 0, 4, conf, buf );  //get total length
   LOBYTE( total_length ) = buf[ 2 ];
   HIBYTE( total_length ) = buf[ 3 ];
@@ -364,7 +359,7 @@ uint8_t getconfdescr( uint8_t addr, uint8_t conf )
         printepdescr( buf_ptr );
         break;
       case 0x29:
-        printhubdescr( buf_ptr, addr );
+        printhubdescr( buf_ptr );
         break;
       case ( USB_DESCRIPTOR_CS_INTERFACE ):
         if ( isMidiStreaming ) {

@@ -9,12 +9,6 @@
 #include <usbh_midi.h>
 #include <usbhub.h>
 
-// Satisfy the IDE, which needs to see the include statment in the ino too.
-#ifdef dobogusinclude
-#include <spi4teensy3.h>
-#endif
-#include <SPI.h>
-
 USB Usb;
 //USBHub Hub(&Usb);
 USBH_MIDI  Midi(&Usb);
@@ -42,10 +36,6 @@ void onInit()
 
 void setup()
 {
-  //Workaround for UHS1 Shield
-  pinMode(7, OUTPUT);
-  digitalWrite(7, HIGH);
-
   if (Usb.Init() == -1) {
     while (1); //halt
   }//if (Usb.Init() == -1...

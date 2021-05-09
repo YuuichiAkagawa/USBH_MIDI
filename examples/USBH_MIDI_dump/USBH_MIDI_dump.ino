@@ -13,12 +13,6 @@
 #include <usbh_midi.h>
 #include <usbhub.h>
 
-// Satisfy the IDE, which needs to see the include statment in the ino too.
-#ifdef dobogusinclude
-#include <spi4teensy3.h>
-#endif
-#include <SPI.h>
-
 USB Usb;
 USBHub Hub(&Usb);
 USBH_MIDI  Midi(&Usb);
@@ -37,10 +31,6 @@ void onInit()
 void setup()
 {
   Serial.begin(115200);
-
-  //Workaround for UHS1 Shield
-  pinMode(7, OUTPUT);
-  digitalWrite(7, HIGH);
 
   if (Usb.Init() == -1) {
     while (1); //halt
@@ -62,17 +52,16 @@ void loop()
 // Poll USB MIDI Controler and send to serial MIDI
 void MIDI_poll()
 {
-  char buf[20];
-  uint8_t bufMidi[64];
+  char buf[16];
+  uint8_t bufMidi[MIDI_EVENT_PACKET_SIZE];
   uint16_t  rcvd;
 
   if (Midi.RecvData( &rcvd,  bufMidi) == 0 ) {
     uint32_t time = (uint32_t)millis();
-    sprintf(buf, "%04X%04X: ", (uint16_t)(time >> 16), (uint16_t)(time & 0xFFFF)); // Split variable to prevent warnings on the ESP8266 platform
+    sprintf(buf, "%04X%04X:%3d:", (uint16_t)(time >> 16), (uint16_t)(time & 0xFFFF), rcvd); // Split variable to prevent warnings on the ESP8266 platform
     Serial.print(buf);
-    Serial.print(rcvd);
-    Serial.print(':');
-    for (int i = 0; i < 64; i++) {
+
+    for (int i = 0; i < MIDI_EVENT_PACKET_SIZE; i++) {
       sprintf(buf, " %02X", bufMidi[i]);
       Serial.print(buf);
     }

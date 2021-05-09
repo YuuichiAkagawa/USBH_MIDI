@@ -78,11 +78,12 @@ If your device does not work, please report this information.
   Get the USB device address.
 
 ## ChangeLog
-2021.4.18 
+2021.5.9 (0.6.0) 
 * Change configuration descriptor parser. Supports large descriptors.
 * Fixed an issue when the endpoint size exceeded 64 bytes.
 * Add OnInit() callback
 * Add a predefined macro "USBH_MIDI_VERSION".
+* Changed the method of deriving the message length.
 
 2021.1.11 (0.5.1)
 * Fix for bool operator.

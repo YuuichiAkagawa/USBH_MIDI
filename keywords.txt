@@ -1,23 +1,27 @@
 #######################################
-# Syntax Coloring Map For Wire
+# Syntax Coloring Map For USBH_MIDI
 #######################################
 
 #######################################
 # Datatypes (KEYWORD1)
 #######################################
 USBH_MIDI	KEYWORD1
-
+USBH_MIDI.h	KEYWORD1
 #######################################
 # Methods and Functions (KEYWORD2)
 #######################################
 RecvData	KEYWORD2
 SendData	KEYWORD2
+RecvRawData	KEYWORD2
+SendRawData	KEYWORD2
 SendSysEx	KEYWORD2
-
+extractSysExData	KEYWORD2
+lookupMsgSize	KEYWORD2
+attachOnInit	KEYWORD2
 #######################################
 # Instances (KEYWORD2)
 #######################################
-
+Midi	KEYWORD2
 #######################################
 # Constants (LITERAL1)
 #######################################

@@ -5,7 +5,7 @@ USB-MIDI 1.0 class driver for Arduino [USB Host Shield 2.0 Library][UHS2]
 USBH_MIDI is USB-MIDI class driver for Arduino USB Host Shield 2.0 Library.  
 USBH_MIDI is included in [USB Host Shield 2.0 Library][UHS2]. You don't need install separatery.
 
-Project site is [here][GHP].
+If you want use with [Arduino MIDI Library][MIDILIB], try the [Transport][UHS2MIDI]
 
 ### for single device
 > File->Examples->USBH_MIDI->USB_MIDI_converter
@@ -80,10 +80,11 @@ If your device does not work, please report this information.
 ## ChangeLog
 2021.5.9 (0.6.0) 
 * Change configuration descriptor parser. Supports large descriptors.
-* Fixed an issue when the endpoint size exceeded 64 bytes.
+* Fixed an issue when the endpoint size exceeded 64 bytes
 * Add OnInit() callback
 * Add a predefined macro "USBH_MIDI_VERSION".
-* Changed the method of deriving the message length.
+* Changed the method of deriving the message length
+* Refine the examples
 
 2021.1.11 (0.5.1)
 * Fix for bool operator.
@@ -174,3 +175,5 @@ Licensed under the [GNU General Public License v2.0][GPL2]
 [wiki]: https://github.com/YuuichiAkagawa/USBH_MIDI/wiki
 [UHS2]: https://github.com/felis/USB_Host_Shield_2.0
 [GHP]: http://yuuichiakagawa.github.io/USBH_MIDI/
+[MIDILIB]: https://github.com/FortySevenEffects/arduino_midi_library
+[UHS2MIDI]: https://github.com/YuuichiAkagawa/Arduino-UHS2MIDI

@@ -34,6 +34,11 @@
 #define MIDI_EVENT_PACKET_SIZE 64
 #define MIDI_MAX_SYSEX_SIZE   256
 
+namespace _ns_USBH_MIDI {
+const uint8_t cin2len[] PROGMEM =  {0, 0, 2, 3, 3, 1, 2, 3, 3, 3, 3, 3, 2, 2, 3, 1};
+const uint8_t sys2cin[] PROGMEM =  {0, 2, 3, 2, 0, 0, 5, 0, 0xf, 0, 0xf, 0xf, 0xf, 0, 0xf, 0xf};
+}
+
 // Endpoint Descriptor extracter Class
 class UsbMidiConfigXtracter {
 public:
@@ -57,7 +62,7 @@ class MidiDescParser : public USBReadParser {
         uint8_t dscrLen; // Descriptor length
         uint8_t dscrType; // Descriptor type
         uint8_t nEPs; // number of valid endpoint
-        bool ifMode; //Configuration mode true: MIDI, false: Vendor specific
+        bool isMidiSearch; //Configuration mode true: MIDI, false: Vendor specific
 
         bool isGoodInterface; // Apropriate interface flag
         uint8_t confValue; // Configuration value
@@ -75,7 +80,7 @@ public:
 class USBH_MIDI : public USBDeviceConfig, public UsbMidiConfigXtracter
 {
 protected:
-        static const uint8_t    epDataInIndex = 1;          // DataIn endpoint index(MIDI)
+        static const uint8_t    epDataInIndex = 1;         // DataIn endpoint index(MIDI)
         static const uint8_t    epDataOutIndex= 2;         // DataOUT endpoint index(MIDI)
 
         /* mandatory members */
@@ -92,6 +97,12 @@ protected:
 
         uint16_t countSysExDataSize(uint8_t *dataptr);
         void setupDeviceSpecific();
+        inline uint8_t convertStatus2Cin(uint8_t status) {
+                return ((status < 0xf0) ? ((status & 0xF0) >> 4) : pgm_read_byte_near(_ns_USBH_MIDI::sys2cin + (status & 0x0F)));
+        };
+        inline uint8_t getMsgSizeFromCin(uint8_t cin) {
+                return pgm_read_byte_near(_ns_USBH_MIDI::cin2len + cin);
+        };
 
         /* UsbConfigXtracter implementation */
         bool EndpointXtract(uint8_t conf, uint8_t iface, uint8_t alt, uint8_t proto, const USB_ENDPOINT_DESCRIPTOR *ep);
@@ -108,12 +119,12 @@ public:
         // Methods for recieving and sending data
         uint8_t RecvData(uint16_t *bytes_rcvd, uint8_t *dataptr);
         uint8_t RecvData(uint8_t *outBuf, bool isRaw=false);
-        uint8_t RecvRawData(uint8_t *outBuf);
+        inline uint8_t RecvRawData(uint8_t *outBuf) { return RecvData(outBuf, true); };
         uint8_t SendData(uint8_t *dataptr, uint8_t nCable=0);
+        inline uint8_t SendRawData(uint16_t bytes_send, uint8_t *dataptr) { return pUsb->outTransfer(bAddress, epInfo[epDataOutIndex].epAddr, bytes_send, dataptr); };
         uint8_t lookupMsgSize(uint8_t midiMsg, uint8_t cin=0);
         uint8_t SendSysEx(uint8_t *dataptr, uint16_t datasize, uint8_t nCable=0);
         uint8_t extractSysExData(uint8_t *p, uint8_t *buf);
-        uint8_t SendRawData(uint16_t bytes_send, uint8_t *dataptr);
         // backward compatibility functions
         inline uint8_t RcvData(uint16_t *bytes_rcvd, uint8_t *dataptr) { return RecvData(bytes_rcvd, dataptr); };
         inline uint8_t RcvData(uint8_t *outBuf) { return RecvData(outBuf); };

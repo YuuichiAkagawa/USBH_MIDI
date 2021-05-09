@@ -25,6 +25,9 @@
  */
 
 #include "usbh_midi.h"
+// To enable serial debugging see "settings.h"
+//#define EXTRADEBUG // Uncomment to get even more debugging data
+
 //////////////////////////
 // MIDI MESAGES
 // midi.org/techspecs/
@@ -109,6 +112,9 @@ uint8_t USBH_MIDI::Init(uint8_t parent, uint8_t port, bool lowspeed)
         uint8_t  bNumEP = 1;      // total number of EP in the configuration
 
         USBTRACE("\rMIDI Init\r\n");
+#ifdef DEBUG_USB_HOST
+        Notify(PSTR("USBH_MIDI version "), 0x80), D_PrintHex((uint8_t) (USBH_MIDI_VERSION / 10000), 0x80), D_PrintHex((uint8_t) (USBH_MIDI_VERSION / 100 % 100), 0x80), D_PrintHex((uint8_t) (USBH_MIDI_VERSION % 100), 0x80), Notify(PSTR("\r\n"), 0x80);
+#endif
 
         //for reconnect
         for(uint8_t i=epDataInIndex; i<=epDataOutIndex; i++) {
@@ -303,7 +309,10 @@ uint8_t USBH_MIDI::RecvData(uint16_t *bytes_rcvd, uint8_t *dataptr)
 {
         *bytes_rcvd = (uint16_t)epInfo[epDataInIndex].maxPktSize;
         uint8_t  r = pUsb->inTransfer(bAddress, epInfo[epDataInIndex].epAddr, bytes_rcvd, dataptr);
-
+#ifdef EXTRADEBUG
+        if( r )
+                USBTRACE2("inTransfer():", r);
+#endif
         if( *bytes_rcvd < (MIDI_EVENT_PACKET_SIZE-4)){
                 dataptr[*bytes_rcvd]     = '\0';
                 dataptr[(*bytes_rcvd)+1] = '\0';
@@ -349,60 +358,52 @@ RecvData_return_from_buffer:
         *(outBuf++) = m = recvBuf[readPtr++];
         *(outBuf++) =     recvBuf[readPtr++];
         *(outBuf++) =     recvBuf[readPtr++];
-        return lookupMsgSize(m, cin);
-}
 
-/* Receive raw data from MIDI device */
-uint8_t USBH_MIDI::RecvRawData(uint8_t *outBuf)
-{
-        return RecvData(outBuf, true);
+        return getMsgSizeFromCin(cin);
 }
 
 /* Send data to MIDI device */
 uint8_t USBH_MIDI::SendData(uint8_t *dataptr, uint8_t nCable)
 {
         uint8_t buf[4];
-        uint8_t msg;
+        uint8_t status = dataptr[0];
 
-        msg = dataptr[0];
-        // SysEx long message ?
-        if( msg == 0xf0 )
-        {
+        uint8_t cin =  convertStatus2Cin(status);
+        if ( status == 0xf0 ) {
+                // SysEx long message
                 return SendSysEx(dataptr, countSysExDataSize(dataptr), nCable);
         }
 
-        buf[0] = (nCable << 4) | (msg >> 4);
-        if( msg < 0xf0 ) msg = msg & 0xf0;
-
-
         //Building USB-MIDI Event Packets
+        buf[0] = (uint8_t)(nCable << 4) | cin;
         buf[1] = dataptr[0];
-        buf[2] = dataptr[1];
-        buf[3] = dataptr[2];
 
-        switch(lookupMsgSize(msg)) {
+        uint8_t msglen = getMsgSizeFromCin(cin);
+        switch(msglen) {
           //3 bytes message
           case 3 :
-                if(msg == 0xf2) {//system common message(SPP)
-                        buf[0] = (nCable << 4) | 3;
-                }
+                buf[2] = dataptr[1];
+                buf[3] = dataptr[2];
                 break;
 
           //2 bytes message
           case 2 :
-                if(msg == 0xf1 || msg == 0xf3) {//system common message(MTC/SongSelect)
-                        buf[0] = (nCable << 4) | 2;
-                }
+                buf[2] = dataptr[1];
                 buf[3] = 0;
                 break;
 
           //1 byte message
           case 1 :
-          default :
                 buf[2] = 0;
                 buf[3] = 0;
                 break;
+          default :
+                break;
         }
+#ifdef EXTRADEBUG
+        //Dump for raw USB-MIDI event packet
+        Notify(PSTR("SendData():"), 0x80), D_PrintHex((buf[0]), 0x80), D_PrintHex((buf[1]), 0x80), D_PrintHex((buf[2]), 0x80), D_PrintHex((buf[3]), 0x80), Notify(PSTR("\r\n"), 0x80);
+#endif
         return pUsb->outTransfer(bAddress, epInfo[epDataOutIndex].epAddr, 4, buf);
 }
 
@@ -423,54 +424,13 @@ void USBH_MIDI::PrintEndpointDescriptor( const USB_ENDPOINT_DESCRIPTOR* ep_ptr )
 /*Return                                 */
 /*  0 : undefined message                */
 /*  0<: Vaild message size(1-3)          */
-uint8_t USBH_MIDI::lookupMsgSize(uint8_t midiMsg, uint8_t cin)
+//uint8_t USBH_MIDI::lookupMsgSize(uint8_t midiMsg, uint8_t cin)
+uint8_t USBH_MIDI::lookupMsgSize(uint8_t status, uint8_t cin)
 {
-        uint8_t msgSize = 0;
-
-        //SysEx message?
-        cin = cin & 0x0f;
-        if( (cin & 0xc) == 4 ) {
-                if( cin == 4 || cin == 7 ) return 3;
-                if( cin == 6 )             return 2;
-                if( cin == 5 )             return 1;
+        if( cin == 0 ){
+                cin =  convertStatus2Cin(status);
         }
-
-        if( midiMsg < 0xf0 ) midiMsg &= 0xf0;
-        switch(midiMsg) {
-          //3 bytes messages
-          case 0xf2 : //system common message(SPP)
-          case 0x80 : //Note off
-          case 0x90 : //Note on
-          case 0xa0 : //Poly KeyPress
-          case 0xb0 : //Control Change
-          case 0xe0 : //PitchBend Change
-                msgSize = 3;
-                break;
-
-          //2 bytes messages
-          case 0xf1 : //system common message(MTC)
-          case 0xf3 : //system common message(SongSelect)
-          case 0xc0 : //Program Change
-          case 0xd0 : //Channel Pressure
-                msgSize = 2;
-                break;
-
-          //1 byte messages
-          case 0xf8 : //system realtime message
-          case 0xf9 : //system realtime message
-          case 0xfa : //system realtime message
-          case 0xfb : //system realtime message
-          case 0xfc : //system realtime message
-          case 0xfe : //system realtime message
-          case 0xff : //system realtime message
-                msgSize = 1;
-                break;
-
-          //undefine messages
-          default :
-                break;
-        }
-        return msgSize;
+        return getMsgSizeFromCin(cin);
 }
 
 /* SysEx data size counter */
@@ -483,11 +443,9 @@ uint16_t USBH_MIDI::countSysExDataSize(uint8_t *dataptr)
         }
 
         //Search terminator(0xf7)
-        while(*dataptr != 0xf7)
-        {
+        while(*dataptr != 0xf7) {
                 dataptr++;
                 c++;
-
                 //Limiter (default: 256 bytes)
                 if(c > MIDI_MAX_SYSEX_SIZE){
                         c = 0;
@@ -503,15 +461,15 @@ uint8_t USBH_MIDI::SendSysEx(uint8_t *dataptr, uint16_t datasize, uint8_t nCable
         uint8_t buf[MIDI_EVENT_PACKET_SIZE];
         uint8_t rc = 0;
         uint16_t n = datasize;
-        uint16_t pktSize = (n*10/3+7)/10*4;   //Calculate total USB MIDI packet size
         uint8_t wptr = 0;
         uint8_t maxpkt = epInfo[epDataInIndex].maxPktSize;
 
-        if( maxpkt > MIDI_EVENT_PACKET_SIZE ) maxpkt = MIDI_EVENT_PACKET_SIZE;
-
         USBTRACE("SendSysEx:\r\t");
         USBTRACE2(" Length:\t", datasize);
+#ifdef EXTRADEBUG
+        uint16_t pktSize = (n+2)/3;   //Calculate total USB MIDI packet size
         USBTRACE2(" Total pktSize:\t", pktSize);
+#endif
 
         while(n > 0) {
                 //Byte 0
@@ -523,14 +481,14 @@ uint8_t USBH_MIDI::SendSysEx(uint8_t *dataptr, uint16_t datasize, uint8_t nCable
                         buf[wptr++] = *(dataptr++);
                         buf[wptr++] = 0x00;
                         buf[wptr++] = 0x00;
-                        n = n - 1;
+                        n = 0;
                         break;
                     case 2 :
                         buf[wptr++] = (nCable << 4) | 0x6;   //x6 SysEx ends with following two bytes.
                         buf[wptr++] = *(dataptr++);
                         buf[wptr++] = *(dataptr++);
                         buf[wptr++] = 0x00;
-                        n = n - 2;
+                        n = 0;
                         break;
                     case 3 :
                         buf[wptr]   = (nCable << 4) | 0x7;   //x7 SysEx ends with following three bytes.
@@ -549,17 +507,10 @@ uint8_t USBH_MIDI::SendSysEx(uint8_t *dataptr, uint16_t datasize, uint8_t nCable
                         if( (rc = pUsb->outTransfer(bAddress, epInfo[epDataOutIndex].epAddr, wptr, buf)) != 0 ){
                                 break;
                         }
-                        wptr = 0;  //rewind data pointer
+                        wptr = 0;  //rewind write pointer
                 }
         }
         return(rc);
-}
-
-/* Send raw data to MIDI device */
-uint8_t USBH_MIDI::SendRawData(uint16_t bytes_send, uint8_t *dataptr)
-{
-        return pUsb->outTransfer(bAddress, epInfo[epDataOutIndex].epAddr, bytes_send, dataptr);
-
 }
 
 uint8_t USBH_MIDI::extractSysExData(uint8_t *p, uint8_t *buf)
@@ -601,7 +552,7 @@ stateParseDescr(0),
 dscrLen(0),
 dscrType(0),
 nEPs(0),
-ifMode(modeMidi){
+isMidiSearch(modeMidi){
         theBuffer.pValue = varBuffer;
         valParser.Initialize(&theBuffer);
         theSkipper.Initialize(&theBuffer);
@@ -672,11 +623,11 @@ bool MidiDescParser::ParseDescriptor(uint8_t **pp, uint16_t *pcntdn) {
                                         USBTRACE2(" IntSubcl:\t", uid->bInterfaceSubClass);
                                         USBTRACE2(" Protocol:\t", uid->bInterfaceProtocol);
                                         // MIDI check mode ?
-                                        if( ifMode ){ //true: MIDI Streaming, false: ALL
+                                        if( isMidiSearch ){ //true: MIDI Streaming, false: ALL
                                                 if( uid->bInterfaceClass == USB_CLASS_AUDIO && uid->bInterfaceSubClass == USB_SUBCLASS_MIDISTREAMING ) {
-						        // MIDI found.
+                                                        // MIDI found.
                                                         USBTRACE("+MIDI found\r\n\r\n");
-						}else{
+                                                }else{
                                                         USBTRACE("-MIDI not found\r\n\r\n");
                                                         break;
                                                 }

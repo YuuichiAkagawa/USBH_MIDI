@@ -45,7 +45,6 @@ USBH_MIDI  Midi1(&Usb);
 USBH_MIDI  Midi2(&Usb);
 
 void MIDI_poll(USBH_MIDI &Midi);
-void doDelay(uint32_t t1, uint32_t t2, uint32_t delayTime);
 
 void setup()
 {

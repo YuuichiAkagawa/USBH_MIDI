@@ -1,4 +1,4 @@
-# USBH_MIDI v0.6.0
+# USBH_MIDI v0.6.1
 
 USB-MIDI 1.0 class driver for Arduino [USB Host Shield 2.0 Library][UHS2]
 
@@ -78,6 +78,9 @@ If your device does not work, please report this information.
   Get the USB device address.
 
 ## ChangeLog
+2022.1.6 (0.6.1) 
+* Fix for RecvData(uint8_t) does not work when CableNumber(CN) is non-zero.
+
 2021.5.9 (0.6.0) 
 * Change configuration descriptor parser. Supports large descriptors.
 * Fixed an issue when the endpoint size exceeded 64 bytes

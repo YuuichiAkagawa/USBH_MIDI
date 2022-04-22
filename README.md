@@ -1,4 +1,4 @@
-# USBH_MIDI v0.6.1
+# USBH_MIDI v1.0.0
 
 USB-MIDI 1.0 class driver for Arduino [USB Host Shield 2.0 Library][UHS2]
 
@@ -65,6 +65,10 @@ If your device does not work, please report this information.
   Register a user function to call when the controller is successfully initialized.  
   See 'eVY1_sample' example.
 
+- `void attachOnRelease(void (*funcOnRelease)(void))`
+
+  Register a user function to call when the device is removed.
+
 - `uint16_t idVendor())`
 
   Get the vendor ID.
@@ -78,6 +82,11 @@ If your device does not work, please report this information.
   Get the USB device address.
 
 ## ChangeLog
+2022.4.22 (1.0.0) 
+* Add OnRelease() callback.
+* The timing for enabling PollEnable has been changed to before the onInit() callback.
+* Update vender specific code for Novation.
+
 2022.1.6 (0.6.1) 
 * Fix for RecvData(uint8_t) does not work when CableNumber(CN) is non-zero.
 
